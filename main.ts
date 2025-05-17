@@ -174,7 +174,7 @@ document.addEventListener("mousemove", (event: MouseEvent) => {
   arm_release.position.x =
     event.clientX - 350 - window.innerWidth / 2 + 960 / 2;
   arm_release.position.y =
-    -300 - event.clientY - window.innerHeight / 2 + 927 / 2;
+    window.innerHeight - event.clientY - window.innerHeight / 2 - 755;
   arm_press.position.x = arm_release.position.x;
   arm_press.position.y = arm_release.position.y;
   arm_magnifier.position.x = arm_release.position.x + 80;
