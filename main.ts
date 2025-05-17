@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { Magnifier } from "./magnifier";
 
 function CreateRenderer() {
   let canvas = document.createElement("canvas");
@@ -60,6 +61,9 @@ tablette.position.x = 0;
 tablette.position.y = 0;
 tablette.position.z = -0.9;
 scene.add(tablette);
+
+const magnifier = new Magnifier(scene);
+magnifier.Create();
 
 // Inputs
 document.addEventListener("keydown", onDocumentKeyDown, false);
