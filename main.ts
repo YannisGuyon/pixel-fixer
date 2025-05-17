@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { Magnifier } from "./magnifier";
+import { Os } from "./os";
 
 function CreateRenderer() {
   let canvas = document.createElement("canvas");
@@ -53,9 +54,14 @@ table.position.y = 0;
 table.position.z = -1;
 scene.add(table);
 
+const os = new Os();
+os.Initialize();
+const os_texture = new THREE.DataTexture(os.GetBuffer(), os.width, os.height);
+os_texture.needsUpdate = true;
+
 const tablette = new THREE.Mesh(
   new THREE.PlaneGeometry(1.2, 0.8, 1, 1),
-  new THREE.MeshStandardMaterial({ color: 0x00ff00 })
+  new THREE.MeshStandardMaterial({ map: os_texture })
 );
 tablette.position.x = 0;
 tablette.position.y = 0;
@@ -120,10 +126,12 @@ function renderLoop(timestamp: number) {
     (timestamp - previous_timestamp) / 1000,
     0.1
   );
-  // const duration = average_duration; // Can also be hardcoded to 0.016.
+  const duration = average_duration; // Can also be hardcoded to 0.016.
 
   if (!debug_stop) {
     // GameLoop(duration, factor);
+    os.Update(duration);
+    tablette.material.map!.needsUpdate = true;
   }
 
   document.getElementById("Fps")!.textContent =
