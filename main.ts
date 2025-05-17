@@ -65,17 +65,14 @@ scene.add(tablette);
 
 const magnifier = new Magnifier(scene);
 
-let is_mouse_down = false;
 document.addEventListener("mousedown", (event: MouseEvent) => {
-  is_mouse_down = true;
-  os.SetMouse(event.clientX, event.clientY, is_mouse_down);
+  os.SetMousePressed(event.clientX, event.clientY);
 });
 document.addEventListener("mouseup", (event: MouseEvent) => {
-  is_mouse_down = false;
-  os.SetMouse(event.clientX, event.clientY, is_mouse_down);
+  os.SetMouseReleased(event.clientX, event.clientY);
 });
 document.addEventListener("mousemove", (event: MouseEvent) => {
-  os.SetMouse(event.clientX, event.clientY, is_mouse_down);
+  os.SetMouseMove(event.clientX, event.clientY);
   magnifier.SetPosition(
     event.clientX - window.innerWidth / 2,
     -event.clientY + window.innerHeight / 2
