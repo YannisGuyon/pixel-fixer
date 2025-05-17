@@ -135,7 +135,7 @@ function renderLoop(timestamp: number) {
   }
 
   document.getElementById("Fps")!.textContent =
-    average_duration.toString() + " ms";
+    average_duration.toString() + " s";
 
   if (debug_camera) {
     controls.update();
