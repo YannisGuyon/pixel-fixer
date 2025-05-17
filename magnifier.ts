@@ -290,9 +290,12 @@ function FragmentShaderZombiePixel() {
 
 export class Magnifier {
   private scene: THREE.Scene;
-  private magnifier_material: THREE.ShaderMaterial;
+  private magnifier_zombie_material: THREE.ShaderMaterial;
+  private magnifier_alive_material: THREE.ShaderMaterial;
+  private magnifier_dead_material: THREE.ShaderMaterial;
   private pixels: THREE.Mesh[][];
   private pixel_size: number;
+  private pixel_state_grid: pixelState[][];
   private pixel_count: number;
   private is_grabbed: boolean;
   public is_enabled: boolean;
@@ -303,15 +306,16 @@ export class Magnifier {
   public constructor(scene: THREE.Scene) {
     this.scene = scene;
     this.pixels = [];
+    this.pixel_state_grid = [[pixelState.alive, pixelState.dead, pixelState.alive],[pixelState.alive, pixelState.dead, pixelState.alive], [pixelState.alive, pixelState.zombie, pixelState.alive]];
     this.pixel_size = 40;
-    this.pixel_count = 9;
+    this.pixel_count = 3;
     this.initial_position_x = 500;
     this.initial_position_y = 0;
     this.current_mouse_position_x = 0;
     this.current_mouse_position_y = 0;
     this.is_grabbed = false;
     this.is_enabled = false;
-    this.magnifier_material = new THREE.ShaderMaterial({
+    this.magnifier_zombie_material = new THREE.ShaderMaterial({
       uniforms: {
         time: { value: 1.0 },
         screen_ratio: { value: 1.0 },
@@ -321,12 +325,32 @@ export class Magnifier {
       fragmentShader: FragmentShaderZombiePixel(),
       transparent: true
     });
+    this.magnifier_alive_material = new THREE.ShaderMaterial({
+      uniforms: {
+        time: { value: 1.0 },
+        screen_ratio: { value: 1.0 },
+        magnifier_center: { value: new THREE.Vector2() }
+      },
+      vertexShader: VertexShaderPixel(),
+      fragmentShader: FragmentShaderAlivePixel(),
+      transparent: true
+    });
+    this.magnifier_dead_material = new THREE.ShaderMaterial({
+      uniforms: {
+        time: { value: 1.0 },
+        screen_ratio: { value: 1.0 },
+        magnifier_center: { value: new THREE.Vector2() }
+      },
+      vertexShader: VertexShaderPixel(),
+      fragmentShader: FragmentShaderDeadPixel(),
+      transparent: true
+    });
     for (let x=0; x<this.pixel_count; x++) {
       this.pixels[x] = [];
       for (let y=0; y<this.pixel_count; y++) {
         this.pixels[x][y] = new THREE.Mesh(
           new THREE.PlaneGeometry(this.pixel_size, this.pixel_size, 1, 1),
-          this.magnifier_material
+          this.mapPixelStateToShaderMaterial(this.pixel_state_grid[x][y])
         );
         this.pixels[x][y].geometry.setAttribute('uid', new THREE.Uint8BufferAttribute([x,y,x,y, x,y,x,y], 2));
         this.pixels[x][y].position.x = 10000+x*this.pixel_size-this.pixel_size*Math.floor(this.pixel_count*0.5);
@@ -336,9 +360,23 @@ export class Magnifier {
       }
     }
   }
+  mapPixelStateToShaderMaterial(state: pixelState):THREE.ShaderMaterial{
+    switch(state){
+      case pixelState.alive:
+        return this.magnifier_alive_material;
+      case pixelState.dead:
+        return this.magnifier_dead_material;
+      case pixelState.zombie:
+        return this.magnifier_zombie_material;
+    }
+  }
   Update(time: number) {
-    this.magnifier_material.uniforms.time.value = 0.5+time*0.0001;
-    this.magnifier_material.uniforms.screen_ratio.value = window.innerWidth/window.innerHeight;
+    this.magnifier_zombie_material.uniforms.time.value = 0.5+time*0.0001;
+    this.magnifier_zombie_material.uniforms.screen_ratio.value = window.innerWidth/window.innerHeight;
+    this.magnifier_dead_material.uniforms.time.value = 0.5+time*0.0001;
+    this.magnifier_dead_material.uniforms.screen_ratio.value = window.innerWidth/window.innerHeight;
+    this.magnifier_alive_material.uniforms.time.value = 0.5+time*0.0001;
+    this.magnifier_alive_material.uniforms.screen_ratio.value = window.innerWidth/window.innerHeight;
   }
   SetPosition(center_x: number, center_y:number) {
     this.current_mouse_position_x = center_x;
@@ -352,7 +390,9 @@ export class Magnifier {
       new_center_x = center_x;
       new_center_y = center_y;
     } 
-    this.magnifier_material.uniforms.magnifier_center.value = new THREE.Vector2(new_center_x/(window.innerWidth*0.5), new_center_y/(window.innerHeight*0.5));
+    this.magnifier_dead_material.uniforms.magnifier_center.value = new THREE.Vector2(new_center_x/(window.innerWidth*0.5), new_center_y/(window.innerHeight*0.5));
+    this.magnifier_zombie_material.uniforms.magnifier_center.value = new THREE.Vector2(new_center_x/(window.innerWidth*0.5), new_center_y/(window.innerHeight*0.5));
+    this.magnifier_alive_material.uniforms.magnifier_center.value = new THREE.Vector2(new_center_x/(window.innerWidth*0.5), new_center_y/(window.innerHeight*0.5));
     for (let x=0; x<this.pixel_count; x++) {
       for (let y=0; y<this.pixel_count; y++) {
         this.pixels[x][y].position.x = new_center_x+x*this.pixel_size-this.pixel_size*Math.floor(this.pixel_count*0.5);
