@@ -1,6 +1,5 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js";
 
 function CreateRenderer() {
   let canvas = document.createElement("canvas");
@@ -43,44 +42,24 @@ let debug_inspect = false;
 // Objects
 const scene = new THREE.Scene();
 scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-const spot = new THREE.PointLight(0xffffff, 1, 400);
-scene.add(spot);
-spot.add(
-  new THREE.Mesh(
-    new THREE.SphereGeometry(0.1),
-    new THREE.MeshBasicMaterial({ color: 0xffffff })
-  )
-);
-spot.position.x = -20;
-spot.position.y = 20;
-spot.position.z = 20;
 
-const camera_placeholder = new THREE.Object3D();
-camera_placeholder.position.y = 0;
-camera_placeholder.position.z = -1;
-
-const camera_representation = new THREE.Mesh(
-  new THREE.ConeGeometry(0.2, 1),
-  new THREE.MeshStandardMaterial({ color: 0x996666 })
-);
-camera_representation.rotateX(Math.PI * 0.5);
-camera_placeholder.add(camera_representation);
-scene.add(camera_placeholder);
-
-// Debug cube
-const box = new THREE.Mesh(
-  new THREE.BoxGeometry(0.1, 0.1, 0.1),
+const table = new THREE.Mesh(
+  new THREE.PlaneGeometry(2, 1, 1, 1),
   new THREE.MeshStandardMaterial({ color: 0xff0000 })
 );
-scene.add(box);
-box.position.x = 0;
-box.position.y = 0;
-box.position.z = 0;
+table.position.x = 0;
+table.position.y = 0;
+table.position.z = -1;
+scene.add(table);
 
-new RGBELoader().setPath("resources/IBL/").load("IBL.hdr", function (texture) {
-  texture.mapping = THREE.EquirectangularReflectionMapping;
-  scene.environment = texture;
-});
+const tablette = new THREE.Mesh(
+  new THREE.PlaneGeometry(1.2, 0.8, 1, 1),
+  new THREE.MeshStandardMaterial({ color: 0x00ff00 })
+);
+tablette.position.x = 0;
+tablette.position.y = 0;
+tablette.position.z = -0.9;
+scene.add(tablette);
 
 // Inputs
 document.addEventListener("keydown", onDocumentKeyDown, false);
