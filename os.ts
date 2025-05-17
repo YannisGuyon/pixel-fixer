@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { OsIcon } from "./os_icon";
 import { OsPanel } from "./os_panel";
+import { OsPanelEmails } from "./os_panel_emails";
 
 export class Os {
   canvas_texture;
@@ -28,11 +29,13 @@ export class Os {
 
     this.icons.push(new OsIcon("notes", 100, 300, true));
     this.icons.push(new OsIcon("clock", 200, 300, true));
-    this.icons.push(new OsIcon("emails", 300, 300, true));
     this.icons.push(new OsIcon("weather", 400, 300, true));
+    this.icons.push(new OsIcon("emails", 300, 300, true));
 
     this.panels.push(new OsPanel("notes", 20, 30, false));
     this.panels.push(new OsPanel("clock", 47, 31, false));
+    this.panels.push(new OsPanel("weather", 278, 34, false));
+    this.panels.push(new OsPanelEmails("emails_page_one", 43, 12, false));
   }
 
   public SetMouse(x: number, y: number, down: boolean) {
