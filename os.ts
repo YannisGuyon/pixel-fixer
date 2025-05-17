@@ -62,6 +62,22 @@ export class Os {
     this.mouse_down = down;
   }
 
+  private CollectEvents() {
+    for (let i = this.panels.length - 1; i >= 0; --i) {
+      if (this.panels[i].CollectEvent(this.mouse_x, this.mouse_y)) {
+        return;
+      }
+    }
+    for (let i = this.icons.length - 1; i >= 0; --i) {
+      if (this.icons[i].CollectEvent(this.mouse_x, this.mouse_y)) {
+        if (i < this.panels.length) {
+          this.panels[i].enabled = true;
+        }
+        return;
+      }
+    }
+  }
+
   public Update(duration: number) {
     for (let i = 0; i < this.width * this.height * 4; ++i) this.data[i] = 255;
     this.canvas_texture.needsUpdate = true;
@@ -72,19 +88,7 @@ export class Os {
     }
 
     if (this.mouse_pressed) {
-      for (let i = this.panels.length - 1; i >= 0; --i) {
-        if (this.panels[i].CollectEvent(this.mouse_x, this.mouse_y)) {
-          break;
-        }
-      }
-      for (let i = this.icons.length - 1; i >= 0; --i) {
-        if (this.icons[i].CollectEvent(this.mouse_x, this.mouse_y)) {
-          if (i < this.panels.length) {
-            this.panels[i].enabled = true;
-          }
-          break;
-        }
-      }
+      this.CollectEvents();
     }
 
     for (const icon of this.icons) {
