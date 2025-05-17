@@ -2,6 +2,7 @@ import * as THREE from "three";
 
 function PixelFace() {
   return `
+    uniform float time;
     varying vec2 vUv;
     float sdCircle( vec2 p, float r ) {
       return length(p) - r;
@@ -60,18 +61,23 @@ function PixelFace() {
       vec2 lookat = vec2(0.5);
       color = Eye(color, vUv, vec2(0.25, 0.6), lookat);
       color = Eye(color, vUv, vec2(0.75, 0.6), lookat);
-      gl_FragColor = vec4( color, 1.0);
+      gl_FragColor = vec4(color, 1.0);
     }
   `;
 }
 
 export class Magnifier {
   private scene: THREE.Scene;
+  private magnifier_material: THREE.ShaderMaterial;
+  private pixels: THREE.Mesh[][];
+  private pixel_size: number;
+  private pixel_count: number;
   public constructor(scene: THREE.Scene) {
     this.scene = scene;
-  }
-  Create() {
-    const magnifier_material = new THREE.ShaderMaterial({
+    this.pixels = [];
+    this.pixel_size = 16;
+    this.pixel_count = 3;
+    this.magnifier_material = new THREE.ShaderMaterial({
       uniforms: {
         time: { value: 1.0 },
         resolution: { value: new THREE.Vector2() }
@@ -79,17 +85,31 @@ export class Magnifier {
       vertexShader: `varying vec2 vUv; void main() {gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); vUv = uv;}`,
       fragmentShader: PixelFace()
     });
-    for (let y=0; y<3; y++) {
-      for (let x=0; x<3; x++) {
-        const pixel_size = 0.05;
-        const magnifier = new THREE.Mesh(
-          new THREE.PlaneGeometry(pixel_size, pixel_size, 1, 1),
-          magnifier_material
+    for (let x=0; x<this.pixel_count; x++) {
+      this.pixels[x] = [];
+      for (let y=0; y<this.pixel_count; y++) {
+        this.pixels[x][y] = new THREE.Mesh(
+          new THREE.PlaneGeometry(this.pixel_size, this.pixel_size, 1, 1),
+          this.magnifier_material
         );
-        magnifier.position.x = x*pixel_size;
-        magnifier.position.y = y*pixel_size;
-        magnifier.position.z = -0.8;
-        this.scene.add(magnifier);
+        this.pixels[x][y].position.x = x*this.pixel_size-this.pixel_size*Math.floor(this.pixel_count*0.5);
+        this.pixels[x][y].position.y = y*this.pixel_size-this.pixel_size*Math.floor(this.pixel_count*0.5);
+        this.pixels[x][y].position.z = -8;
+        this.scene.add(this.pixels[x][y]);
+      }
+    }
+  }
+  Create() {
+    
+  }
+  Update(time: number) {
+    this.magnifier_material.uniforms.time.value = 0.5+time*0.0001;
+  }
+  SetPosition(center_x: number, center_y:number) {
+    for (let x=0; x<this.pixel_count; x++) {
+      for (let y=0; y<this.pixel_count; y++) {
+        this.pixels[x][y].position.x = center_x+x*this.pixel_size-this.pixel_size*Math.floor(this.pixel_count*0.5);
+        this.pixels[x][y].position.y = center_y+y*this.pixel_size-this.pixel_size*Math.floor(this.pixel_count*0.5);
       }
     }
   }

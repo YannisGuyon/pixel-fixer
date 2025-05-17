@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { Magnifier } from "./magnifier";
 import { Os } from "./os";
 
@@ -29,29 +28,21 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1;
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
-const camera = new THREE.PerspectiveCamera(
-  /*fov=*/ 60,
-  /*aspect=*/ window.innerWidth / window.innerHeight,
-  /*near=*/ 0.001,
-  /*far=*/ 100
-);
-
-const controls = new OrbitControls(camera, renderer.domElement);
-let debug_camera = false;
-let debug_stop = false;
-let debug_inspect = false;
 
 // Objects
 const scene = new THREE.Scene();
 scene.add(new THREE.AmbientLight(0xffffff, 0.5));
 
+const camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 0, 10 );
+scene.add(camera);
+
 const table = new THREE.Mesh(
-  new THREE.PlaneGeometry(2, 1, 1, 1),
+  new THREE.PlaneGeometry(500, 250, 1, 1),
   new THREE.MeshStandardMaterial({ color: 0xff0000 })
 );
 table.position.x = 0;
 table.position.y = 0;
-table.position.z = -1;
+table.position.z = -10;
 scene.add(table);
 
 const os = new Os();
@@ -60,38 +51,20 @@ const os_texture = new THREE.DataTexture(os.GetBuffer(), os.width, os.height);
 os_texture.needsUpdate = true;
 
 const tablette = new THREE.Mesh(
-  new THREE.PlaneGeometry(1.2, 0.8, 1, 1),
+  new THREE.PlaneGeometry(400, 200, 1),
   new THREE.MeshStandardMaterial({ map: os_texture })
 );
 tablette.position.x = 0;
 tablette.position.y = 0;
-tablette.position.z = -0.9;
+tablette.position.z = -9;
 scene.add(tablette);
 
 const magnifier = new Magnifier(scene);
 magnifier.Create();
 
-// Inputs
-document.addEventListener("keydown", onDocumentKeyDown, false);
-function onDocumentKeyDown(event: KeyboardEvent) {
-  var keyCode = event.key;
-  if (keyCode == "Shift" && debug_inspect) {
-    debug_camera = !debug_camera;
-    if (debug_camera) {
-      camera.position.x = 0;
-      camera.position.y = 0;
-      camera.position.z = 20;
-    }
-  } else if (keyCode == "ArrowLeft") {
-    // player.StartMoveLeft();
-  } else if (keyCode == "ArrowRight") {
-    // player.StartMoveRight();
-  } else if (keyCode == " ") {
-    debug_stop = !debug_stop;
-    document.getElementById("Pause")!.style.display = debug_stop
-      ? "block"
-      : "none";
-  }
+document.addEventListener("mousemove", onDocumentMouseMove, false);
+function onDocumentMouseMove(event: MouseEvent) {
+  magnifier.SetPosition(event.clientX-window.innerWidth/2, -event.clientY+window.innerHeight/2);
 }
 
 document.addEventListener("keyup", onDocumentKeyUp, false);
@@ -107,10 +80,8 @@ function onDocumentKeyUp(event: KeyboardEvent) {
 // Events
 window.addEventListener("resize", onWindowResize, false);
 function onWindowResize() {
-  camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.render(scene, camera);
 }
 
 let previous_timestamp: null | number = null;
@@ -128,18 +99,12 @@ function renderLoop(timestamp: number) {
   );
   const duration = average_duration; // Can also be hardcoded to 0.016.
 
-  if (!debug_stop) {
-    // GameLoop(duration, factor);
-    os.Update(duration);
-    tablette.material.map!.needsUpdate = true;
-  }
+  // GameLoop(duration, factor);
+  os.Update(duration);
+  tablette.material.map!.needsUpdate = true;
 
   document.getElementById("Fps")!.textContent =
     average_duration.toString() + " s";
-
-  if (debug_camera) {
-    controls.update();
-  }
 
   renderer.autoClear = false;
   renderer.clear();
