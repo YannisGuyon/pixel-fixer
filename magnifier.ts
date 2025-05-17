@@ -102,6 +102,7 @@ export class Magnifier {
   private pixel_size: number;
   private pixel_count: number;
   private is_grabbed: boolean;
+  public is_enabled: boolean;
   private initial_position_x: number;
   private initial_position_y: number;
   private current_mouse_position_x: number;
@@ -116,6 +117,7 @@ export class Magnifier {
     this.current_mouse_position_x = 0;
     this.current_mouse_position_y = 0;
     this.is_grabbed = false;
+    this.is_enabled = false;
     this.magnifier_material = new THREE.ShaderMaterial({
       uniforms: {
         time: { value: 1.0 },
@@ -133,8 +135,8 @@ export class Magnifier {
           new THREE.PlaneGeometry(this.pixel_size, this.pixel_size, 1, 1),
           this.magnifier_material
         );
-        this.pixels[x][y].position.x = x*this.pixel_size-this.pixel_size*Math.floor(this.pixel_count*0.5);
-        this.pixels[x][y].position.y = y*this.pixel_size-this.pixel_size*Math.floor(this.pixel_count*0.5);
+        this.pixels[x][y].position.x = 10000+x*this.pixel_size-this.pixel_size*Math.floor(this.pixel_count*0.5);
+        this.pixels[x][y].position.y = 10000+y*this.pixel_size-this.pixel_size*Math.floor(this.pixel_count*0.5);
         this.pixels[x][y].position.z = -8;
         this.scene.add(this.pixels[x][y]);
       }
@@ -149,7 +151,10 @@ export class Magnifier {
     this.current_mouse_position_y = center_y;
     let new_center_x = this.initial_position_x;
     let new_center_y = this.initial_position_y;
-    if (this.is_grabbed) {
+    if (!this.is_enabled) {
+      new_center_x = 10000;
+      new_center_y = 10000;
+    } else if (this.is_grabbed) {
       new_center_x = center_x;
       new_center_y = center_y;
     } 
