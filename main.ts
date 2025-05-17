@@ -65,17 +65,28 @@ scene.add(tablette);
 
 const magnifier = new Magnifier(scene);
 
-let is_mouse_down = false;
+// Sounds
+const sound_taps = [
+  document.getElementById("SoundTap1")! as HTMLMediaElement,
+  document.getElementById("SoundTap2")! as HTMLMediaElement,
+  document.getElementById("SoundTap3")! as HTMLMediaElement,
+  document.getElementById("SoundTap4")! as HTMLMediaElement,
+];
+
+// Events
 document.addEventListener("mousedown", (event: MouseEvent) => {
-  is_mouse_down = true;
-  os.SetMouse(event.clientX, event.clientY, is_mouse_down);
+  os.SetMousePressed(event.clientX, event.clientY);
+  if (os.IsMouseOverTabletScreen(event.clientX, event.clientY)) {
+    const sound_tap =
+      sound_taps[THREE.MathUtils.randInt(0, sound_taps.length - 1)];
+    sound_tap.play();
+  }
 });
 document.addEventListener("mouseup", (event: MouseEvent) => {
-  is_mouse_down = false;
-  os.SetMouse(event.clientX, event.clientY, is_mouse_down);
+  os.SetMouseReleased(event.clientX, event.clientY);
 });
 document.addEventListener("mousemove", (event: MouseEvent) => {
-  os.SetMouse(event.clientX, event.clientY, is_mouse_down);
+  os.SetMouseMove(event.clientX, event.clientY);
   magnifier.SetPosition(
     event.clientX - window.innerWidth / 2,
     -event.clientY + window.innerHeight / 2
@@ -93,9 +104,12 @@ document.addEventListener("keyup", (event: KeyboardEvent) => {
   }
 });
 
-// Events
 window.addEventListener("resize", onWindowResize);
 function onWindowResize() {
+  camera.left = Math.floor(window.innerWidth / -2);
+  camera.right = Math.floor(window.innerWidth / -2) + window.innerWidth;
+  camera.top = Math.floor(window.innerHeight / 2);
+  camera.bottom = Math.floor(window.innerHeight / 2) - window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
@@ -116,6 +130,10 @@ function renderLoop(timestamp: number) {
   const duration = average_duration; // Can also be hardcoded to 0.016.
 
   os.Update(duration);
+  if (magnifier.is_enabled !== os.MagnifierSettingIsOn()) {
+    magnifier.is_enabled = os.MagnifierSettingIsOn();
+    magnifier.Release();
+  }
   magnifier.Update(duration);
   // tablette.material.map!.needsUpdate = true;
 
