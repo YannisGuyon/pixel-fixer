@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "rootDir": "./",
+    "outDir": "./dist",
+    "module": "ES6",
+    "target": "ES6",
+    "strict": true,
+    "allowJs": false,
+    "allowUnreachableCode": false,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noImplicitOverride": true,
+    "sourceMap": true,
+    "moduleResolution": "node"
+  },
+  "exclude": ["**/dist/**"]
+}

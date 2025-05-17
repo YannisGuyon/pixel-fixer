@@ -1,0 +1,32 @@
+const path = require('path');
+
+module.exports = {
+    entry: './main.ts',
+    module: {
+        rules: [
+            {
+                test: /\.tsx?$/,
+                use: 'ts-loader',
+                exclude: /node_modules/,
+            },
+        ],
+    },
+    resolve: {
+        alias: {
+            three: path.resolve('./node_modules/three')
+        },
+        extensions: ['.tsx', '.ts', '.js'],
+    },
+    output: {
+        filename: 'bundle.js',
+        path: path.resolve(__dirname, 'dist'),
+    },
+    mode: 'development',
+    devtool: 'eval-source-map',
+    devServer: {
+        static: {
+            directory: path.join(__dirname, 'dist'),
+        },
+        hot: true,
+    }
+};
