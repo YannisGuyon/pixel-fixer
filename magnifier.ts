@@ -101,11 +101,19 @@ export class Magnifier {
   private pixel_size: number;
   private pixel_count: number;
   private is_grabbed: boolean;
+  private initial_position_x: number;
+  private initial_position_y: number;
+  private current_mouse_position_x: number;
+  private current_mouse_position_y: number;
   public constructor(scene: THREE.Scene) {
     this.scene = scene;
     this.pixels = [];
     this.pixel_size = 20;
     this.pixel_count = 9;
+    this.initial_position_x = 500;
+    this.initial_position_y = 0;
+    this.current_mouse_position_x = 0;
+    this.current_mouse_position_y = 0;
     this.is_grabbed = false;
     this.magnifier_material = new THREE.ShaderMaterial({
       uniforms: {
@@ -136,8 +144,10 @@ export class Magnifier {
     this.magnifier_material.uniforms.screen_ratio.value = window.innerWidth/window.innerHeight;
   }
   SetPosition(center_x: number, center_y:number) {
-    let new_center_x = 500;
-    let new_center_y = 0;
+    this.current_mouse_position_x = center_x;
+    this.current_mouse_position_y = center_y;
+    let new_center_x = this.initial_position_x;
+    let new_center_y = this.initial_position_y;
     if (this.is_grabbed) {
       new_center_x = center_x;
       new_center_y = center_y;
@@ -152,8 +162,10 @@ export class Magnifier {
   }
   Grab() {
     this.is_grabbed = true;
+    this.SetPosition(this.current_mouse_position_x, this.current_mouse_position_y);
   }
   Release() {
     this.is_grabbed = false;
+    this.SetPosition(this.initial_position_x, this.initial_position_y);
   }
 }
