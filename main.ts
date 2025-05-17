@@ -84,6 +84,17 @@ document.addEventListener("mousemove", (event: MouseEvent) => {
   );
 });
 
+document.addEventListener("keydown", (event: KeyboardEvent) => {
+  if (event.code === "ShiftLeft") {
+    magnifier.Grab();
+  }
+});
+document.addEventListener("keyup", (event: KeyboardEvent) => {
+  if (event.code === "ShiftLeft") {
+    magnifier.Release();
+  }
+});
+
 // Events
 window.addEventListener("resize", onWindowResize);
 function onWindowResize() {

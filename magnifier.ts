@@ -100,11 +100,13 @@ export class Magnifier {
   private pixels: THREE.Mesh[][];
   private pixel_size: number;
   private pixel_count: number;
+  private is_grabbed: boolean;
   public constructor(scene: THREE.Scene) {
     this.scene = scene;
     this.pixels = [];
     this.pixel_size = 20;
     this.pixel_count = 9;
+    this.is_grabbed = false;
     this.magnifier_material = new THREE.ShaderMaterial({
       uniforms: {
         time: { value: 1.0 },
@@ -134,12 +136,24 @@ export class Magnifier {
     this.magnifier_material.uniforms.screen_ratio.value = window.innerWidth/window.innerHeight;
   }
   SetPosition(center_x: number, center_y:number) {
-    this.magnifier_material.uniforms.magnifier_center.value = new THREE.Vector2(center_x/(window.innerWidth*0.5), center_y/(window.innerHeight*0.5));
+    let new_center_x = 500;
+    let new_center_y = 0;
+    if (this.is_grabbed) {
+      new_center_x = center_x;
+      new_center_y = center_y;
+    } 
+    this.magnifier_material.uniforms.magnifier_center.value = new THREE.Vector2(new_center_x/(window.innerWidth*0.5), new_center_y/(window.innerHeight*0.5));
     for (let x=0; x<this.pixel_count; x++) {
       for (let y=0; y<this.pixel_count; y++) {
-        this.pixels[x][y].position.x = center_x+x*this.pixel_size-this.pixel_size*Math.floor(this.pixel_count*0.5);
-        this.pixels[x][y].position.y = center_y+y*this.pixel_size-this.pixel_size*Math.floor(this.pixel_count*0.5);
+        this.pixels[x][y].position.x = new_center_x+x*this.pixel_size-this.pixel_size*Math.floor(this.pixel_count*0.5);
+        this.pixels[x][y].position.y = new_center_y+y*this.pixel_size-this.pixel_size*Math.floor(this.pixel_count*0.5);
       }
     }
+  }
+  Grab() {
+    this.is_grabbed = true;
+  }
+  Release() {
+    this.is_grabbed = false;
   }
 }
