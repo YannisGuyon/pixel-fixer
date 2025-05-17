@@ -41,9 +41,12 @@ const camera = new THREE.OrthographicCamera(
 );
 scene.add(camera);
 
+const loader = new THREE.TextureLoader();
 const table = new THREE.Mesh(
-  new THREE.PlaneGeometry(500, 250, 1, 1),
-  new THREE.MeshStandardMaterial({ color: 0xff0000 })
+  new THREE.PlaneGeometry(4032 * 0.5, 3024 * 0.5, 1, 1),
+  new THREE.MeshStandardMaterial({
+    map: loader.load("resources/texture/bureau.webp"),
+  })
 );
 table.position.x = 0;
 table.position.y = 0;
@@ -63,9 +66,62 @@ tablette.position.y = 0;
 tablette.position.z = -9;
 scene.add(tablette);
 
+const arm_release = new THREE.Mesh(
+  new THREE.PlaneGeometry(1007 * 0.5, 3098 * 0.5, 1, 1),
+  new THREE.MeshStandardMaterial({
+    map: loader.load("resources/texture/release.webp"),
+  })
+);
+arm_release.position.x = 200;
+arm_release.position.y = -700;
+arm_release.position.z = -7;
+arm_release.material.transparent = true;
+scene.add(arm_release);
+
+const arm_press = new THREE.Mesh(
+  new THREE.PlaneGeometry(1007 * 0.5, 3098 * 0.5, 1, 1),
+  new THREE.MeshStandardMaterial({
+    map: loader.load("resources/texture/press.webp"),
+  })
+);
+arm_press.position.x = 200;
+arm_press.position.y = -700;
+arm_press.position.z = -7;
+arm_press.material.transparent = true;
+scene.add(arm_press);
+arm_press.visible = false;
+
+const arm_magnifier = new THREE.Mesh(
+  new THREE.PlaneGeometry(1501 * 0.5, 3208 * 0.5, 1, 1),
+  new THREE.MeshStandardMaterial({
+    map: loader.load("resources/texture/arm_magnifier.webp"),
+  })
+);
+arm_magnifier.position.x = 0;
+arm_magnifier.position.y = 0;
+arm_magnifier.position.z = -7;
+arm_magnifier.material.transparent = true;
+scene.add(arm_magnifier);
+arm_magnifier.visible = false;
+
+const the_magnifier = new THREE.Mesh(
+  new THREE.PlaneGeometry(1296 * 0.28, 2304 * 0.28, 1, 1),
+  new THREE.MeshStandardMaterial({
+    map: loader.load("resources/texture/magnifier.webp"),
+  })
+);
+the_magnifier.position.x = 520;
+the_magnifier.position.y = -30;
+the_magnifier.position.z = -8;
+the_magnifier.material.transparent = true;
+scene.add(the_magnifier);
+the_magnifier.visible = false;
+
 const magnifier = new Magnifier(scene);
 
 // Sounds
+let first_interaction = false;
+const sound_track = document.getElementById("SoundTrack")! as HTMLMediaElement;
 const sound_taps = [
   document.getElementById("SoundTap1")! as HTMLMediaElement,
   document.getElementById("SoundTap2")! as HTMLMediaElement,
@@ -75,6 +131,26 @@ const sound_taps = [
 
 // Events
 document.addEventListener("mousedown", (event: MouseEvent) => {
+  if (
+    os.MagnifierSettingIsOn() &&
+    event.clientX >= window.innerWidth / 2 + 370 &&
+    event.clientX < window.innerWidth / 2 + 370 + 300 &&
+    event.clientY >= window.innerHeight / 2 - 250 &&
+    event.clientY < window.innerHeight / 2 + 300
+  ) {
+    arm_magnifier.visible = !arm_magnifier.visible;
+  }
+  if (arm_magnifier.visible) {
+    arm_release.visible = false;
+    arm_press.visible = false;
+  } else {
+    arm_release.visible = false;
+    arm_press.visible = true;
+  }
+  if (!first_interaction) {
+    sound_track.play();
+    first_interaction = true;
+  }
   os.SetMousePressed(event.clientX, event.clientY);
   if (os.IsMouseOverTabletScreen(event.clientX, event.clientY)) {
     const sound_tap =
@@ -83,10 +159,26 @@ document.addEventListener("mousedown", (event: MouseEvent) => {
   }
 });
 document.addEventListener("mouseup", (event: MouseEvent) => {
+  if (arm_magnifier.visible) {
+    arm_release.visible = false;
+    arm_press.visible = false;
+  } else {
+    arm_release.visible = true;
+    arm_press.visible = false;
+  }
   os.SetMouseReleased(event.clientX, event.clientY);
 });
 document.addEventListener("mousemove", (event: MouseEvent) => {
   os.SetMouseMove(event.clientX, event.clientY);
+  console.log(window.innerHeight);
+  arm_release.position.x =
+    event.clientX - 350 - window.innerWidth / 2 + 960 / 2;
+  arm_release.position.y =
+    -300 - event.clientY - window.innerHeight / 2 + 927 / 2;
+  arm_press.position.x = arm_release.position.x;
+  arm_press.position.y = arm_release.position.y;
+  arm_magnifier.position.x = arm_release.position.x + 80;
+  arm_magnifier.position.y = arm_release.position.y + 90;
   magnifier.SetPosition(
     event.clientX - window.innerWidth / 2,
     -event.clientY + window.innerHeight / 2
@@ -129,7 +221,10 @@ function renderLoop(timestamp: number) {
   );
   const duration = average_duration; // Can also be hardcoded to 0.016.
 
-  os.Update(duration);
+  os.Update(duration, arm_magnifier.visible);
+
+  the_magnifier.visible = os.MagnifierSettingIsOn() && !arm_magnifier.visible;
+
   if (magnifier.is_enabled !== os.MagnifierSettingIsOn()) {
     magnifier.is_enabled = os.MagnifierSettingIsOn();
     magnifier.Release();
