@@ -60,7 +60,6 @@ tablette.position.z = -9;
 scene.add(tablette);
 
 const magnifier = new Magnifier(scene);
-magnifier.Create();
 
 document.addEventListener("mousemove", onDocumentMouseMove, false);
 function onDocumentMouseMove(event: MouseEvent) {
@@ -101,6 +100,7 @@ function renderLoop(timestamp: number) {
 
   // GameLoop(duration, factor);
   os.Update(duration);
+  magnifier.Update(duration);
   tablette.material.map!.needsUpdate = true;
 
   document.getElementById("Fps")!.textContent =

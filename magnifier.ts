@@ -1,9 +1,28 @@
 import * as THREE from "three";
 
-function PixelFace() {
+function VertexShaderPixel() {
   return `
     uniform float time;
+    float rand(vec2 co){
+      return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
+    }
     varying vec2 vUv;
+    varying vec2 position_2d;
+    void main() {
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      vUv = uv;
+      position_2d = gl_Position.xy;
+    }
+  `;
+}
+
+function FragmentShaderPixel() {
+  return `
+    uniform float time;
+    uniform vec2 magnifier_center;
+    uniform float screen_ratio;
+    varying vec2 vUv;
+    varying vec2 position_2d;
     float sdCircle( vec2 p, float r ) {
       return length(p) - r;
     }
@@ -57,11 +76,20 @@ function PixelFace() {
     }
     void main()
     {
+      vec2 norm_position_2d = position_2d*vec2(screen_ratio, 1.0);
+      vec2 norm_magnifier_center = magnifier_center*vec2(screen_ratio, 1.0);
+      if (length(norm_position_2d-norm_magnifier_center)>0.2) {
+        discard;
+      }
       vec3 color = vec3(0.8, 0.4, 1.0);
-      vec2 lookat = vec2(0.5);
-      color = Eye(color, vUv, vec2(0.25, 0.6), lookat);
-      color = Eye(color, vUv, vec2(0.75, 0.6), lookat);
-      gl_FragColor = vec4(color, 1.0);
+      if (vUv.x<0.05 || vUv.x>0.95 || vUv.y<0.05 || vUv.y>0.95) {
+        gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+      } else {
+        vec2 lookat = vec2(0.5);
+        color = Eye(color, vUv, vec2(0.25, 0.6), lookat);
+        color = Eye(color, vUv, vec2(0.75, 0.6), lookat);
+        gl_FragColor = vec4(color, 1.0);
+      }
     }
   `;
 }
@@ -75,15 +103,17 @@ export class Magnifier {
   public constructor(scene: THREE.Scene) {
     this.scene = scene;
     this.pixels = [];
-    this.pixel_size = 16;
-    this.pixel_count = 3;
+    this.pixel_size = 20;
+    this.pixel_count = 9;
     this.magnifier_material = new THREE.ShaderMaterial({
       uniforms: {
         time: { value: 1.0 },
-        resolution: { value: new THREE.Vector2() }
+        screen_ratio: { value: 1.0 },
+        magnifier_center: { value: new THREE.Vector2() }
       },
-      vertexShader: `varying vec2 vUv; void main() {gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); vUv = uv;}`,
-      fragmentShader: PixelFace()
+      vertexShader: VertexShaderPixel(),
+      fragmentShader: FragmentShaderPixel(),
+      transparent: true
     });
     for (let x=0; x<this.pixel_count; x++) {
       this.pixels[x] = [];
@@ -99,13 +129,12 @@ export class Magnifier {
       }
     }
   }
-  Create() {
-    
-  }
   Update(time: number) {
     this.magnifier_material.uniforms.time.value = 0.5+time*0.0001;
+    this.magnifier_material.uniforms.screen_ratio.value = window.innerWidth/window.innerHeight;
   }
   SetPosition(center_x: number, center_y:number) {
+    this.magnifier_material.uniforms.magnifier_center.value = new THREE.Vector2(center_x/(window.innerWidth*0.5), center_y/(window.innerHeight*0.5));
     for (let x=0; x<this.pixel_count; x++) {
       for (let y=0; y<this.pixel_count; y++) {
         this.pixels[x][y].position.x = center_x+x*this.pixel_size-this.pixel_size*Math.floor(this.pixel_count*0.5);
