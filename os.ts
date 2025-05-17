@@ -13,6 +13,9 @@ export class Os {
   screen_is_locked = true;
   started_swiping_at_y = -1;
 
+  started_dragging_at_x = -1;
+  started_dragging_at_y = -1;
+
   icons = new Array<OsIcon>();
   panels = new Array<OsPanel>();
   toggles = new Array<OsToggle>(); // Settings panel only
@@ -44,13 +47,14 @@ export class Os {
     this.lockscreen_texture.minFilter = THREE.LinearFilter;
     this.lockscreen_texture.generateMipmaps = false;
 
-    this.icons.push(new OsIcon("notes", 100, 300, true));
-    this.icons.push(new OsIcon("clock", 200, 300, true));
-    this.icons.push(new OsIcon("weather", 400, 300, true));
-    this.icons.push(new OsIcon("emails", 300, 300, true));
+    this.icons.push(new OsIcon("notes", 100, 300, true, true));
+    this.icons.push(new OsIcon("clock", 200, 300, true, true));
+    this.icons.push(new OsIcon("weather", 400, 300, true, true));
+    this.icons.push(new OsIcon("emails", 300, 300, true, true));
+    this.icons.push(new OsIcon("settings", 100, 130, true, true));
     // Add more icons here
-    this.icons.push(new OsIcon("settings", 100, 130, true));
-    this.icons.push(new OsIcon("lock", 450, 100, true));
+    this.icons.push(new OsIcon("lock", 450, 100, true, true));
+    this.icons.push(new OsIcon("xorcize", 200, 130, false, false));
 
     this.panels.push(new OsPanel("notes", 20, 30, false));
     this.panels.push(new OsPanel("clock", 47, 31, false));
@@ -58,11 +62,11 @@ export class Os {
     this.panels.push(new OsPanelEmails("emails_page_one", 43, 12, false));
     this.panels.push(new OsPanel("settings", 100, 70, false));
 
-    this.toggles.push(new OsToggle(480, 350, true));
-    this.toggles.push(new OsToggle(480, 280, true));
-    this.toggles.push(new OsToggle(480, 210, true));
-    this.toggles.push(new OsToggle(480, 150, true));
-    this.toggles.push(new OsToggle(480, 90, true));
+    this.toggles.push(new OsToggle(480, 350, false, false)); // Dark mode
+    this.toggles.push(new OsToggle(480, 280, false, true)); // Wi-Fi
+    this.toggles.push(new OsToggle(480, 210, true, false)); // Nothing
+    this.toggles.push(new OsToggle(480, 150, false, false)); // Magnifier
+    this.toggles.push(new OsToggle(480, 90, false, false)); // Advanced tools
   }
 
   public SetMouseMove(x: number, y: number) {
@@ -121,8 +125,11 @@ export class Os {
 
   private CollectEvents() {
     if (this.panels[this.panels.length - 1].enabled) {
-      for (const toggle of this.toggles) {
-        if (toggle.CollectEvent(this.mouse_x, this.mouse_y)) {
+      for (let i = this.toggles.length - 1; i >= 0; --i) {
+        if (this.toggles[i].CollectEvent(this.mouse_x, this.mouse_y)) {
+          if (i == 0) {
+            // Kill half pixels
+          }
           return;
         }
       }
@@ -136,8 +143,16 @@ export class Os {
       if (this.icons[i].CollectEvent(this.mouse_x, this.mouse_y)) {
         if (i < this.panels.length) {
           this.panels[i].enabled = true;
-        } else if (i == this.icons.length - 1) {
+        } else if (i == this.icons.length - 2) {
           this.screen_is_locked = true;
+        } else if (i == this.icons.length - 1) {
+          // Player needs to drag the Xorcize app icon over all unalive pixels
+          this.started_dragging_at_x = this.mouse_x;
+          this.started_dragging_at_y = this.mouse_y;
+          this.icons[i].overidden_position_offset.x =
+            this.mouse_x - this.icons[i].final_position.x;
+          this.icons[i].overidden_position_offset.y =
+            this.mouse_y - this.icons[i].final_position.y;
         }
         return;
       }
@@ -145,6 +160,8 @@ export class Os {
   }
 
   public Update(duration: number) {
+    this.icons[6].enabled = this.toggles[4].on;
+
     for (let i = 0; i < this.width * this.height * 4; ++i) this.data[i] = 255;
     this.canvas_texture.needsUpdate = true;
     if (this.mouse_pressed) {
@@ -179,6 +196,18 @@ export class Os {
         this.CollectEvents();
       }
 
+      // Xorcize
+      if (!this.mouse_down || !this.icons[6].enabled) {
+        this.started_dragging_at_x = -1;
+        this.started_dragging_at_y = -1;
+      } else if (
+        this.started_dragging_at_x !== -1 &&
+        this.started_dragging_at_y !== -1
+      ) {
+        this.icons[6].overidden_position.x = this.mouse_x;
+        this.icons[6].overidden_position.y = this.mouse_y;
+      }
+
       if (this.wallpaper_texture.image) {
         this.renderer.copyTextureToTexture(
           this.wallpaper_texture_position,
@@ -201,5 +230,9 @@ export class Os {
 
     this.mouse_pressed = false;
     this.mouse_released = false;
+  }
+
+  public MagnifierSettingIsOn() {
+    return this.toggles[3].on;
   }
 }

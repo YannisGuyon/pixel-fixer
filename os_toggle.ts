@@ -5,11 +5,13 @@ export class OsToggle {
   texture_on;
   position = new THREE.Vector2();
   final_position = new THREE.Vector2();
+  rabid = false;
 
   public constructor(
     x: number,
     y: number,
-    public on: boolean
+    public on: boolean,
+    public turns_rabid_when_toggled: boolean
   ) {
     this.position.x = x;
     this.position.y = y;
@@ -31,7 +33,11 @@ export class OsToggle {
       mouse_y >= this.final_position.y &&
       mouse_y < this.final_position.y + this.texture_off.image.height
     ) {
+      if (this.rabid) return true; // Capture but do nothing
       this.on = !this.on;
+      if (this.on && this.turns_rabid_when_toggled) {
+        this.rabid = true;
+      }
       this.RandomOffset();
       return true;
     }
@@ -48,6 +54,10 @@ export class OsToggle {
     renderer: THREE.WebGLRenderer,
     canvas_texture: THREE.Texture
   ) {
+    if (this.rabid) {
+      this.RandomOffset();
+      this.on = !this.on;
+    }
     let texture = this.on ? this.texture_on : this.texture_off;
     if (texture.image) {
       renderer.copyTextureToTexture(

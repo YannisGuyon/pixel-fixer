@@ -113,6 +113,10 @@ function renderLoop(timestamp: number) {
   const duration = average_duration; // Can also be hardcoded to 0.016.
 
   os.Update(duration);
+  if (magnifier.is_enabled !== os.MagnifierSettingIsOn()) {
+    magnifier.is_enabled = os.MagnifierSettingIsOn();
+    magnifier.Release();
+  }
   magnifier.Update(duration);
   // tablette.material.map!.needsUpdate = true;
 
