@@ -33,7 +33,14 @@ document.body.appendChild(renderer.domElement);
 const scene = new THREE.Scene();
 scene.add(new THREE.AmbientLight(0xffffff, 0.5));
 
-const camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 0, 10 );
+const camera = new THREE.OrthographicCamera(
+  window.innerWidth / -2,
+  window.innerWidth / 2,
+  window.innerHeight / 2,
+  window.innerHeight / -2,
+  0,
+  10
+);
 scene.add(camera);
 
 const table = new THREE.Mesh(
@@ -45,14 +52,12 @@ table.position.y = 0;
 table.position.z = -10;
 scene.add(table);
 
-const os = new Os();
+const os = new Os(renderer);
 os.Initialize();
-const os_texture = new THREE.DataTexture(os.GetBuffer(), os.width, os.height);
-os_texture.needsUpdate = true;
 
 const tablette = new THREE.Mesh(
   new THREE.PlaneGeometry(400, 200, 1),
-  new THREE.MeshStandardMaterial({ map: os_texture })
+  new THREE.MeshStandardMaterial({ map: os.canvas_texture })
 );
 tablette.position.x = 0;
 tablette.position.y = 0;
@@ -63,21 +68,14 @@ const magnifier = new Magnifier(scene);
 
 document.addEventListener("mousemove", onDocumentMouseMove, false);
 function onDocumentMouseMove(event: MouseEvent) {
-  magnifier.SetPosition(event.clientX-window.innerWidth/2, -event.clientY+window.innerHeight/2);
-}
-
-document.addEventListener("keyup", onDocumentKeyUp, false);
-function onDocumentKeyUp(event: KeyboardEvent) {
-  var keyCode = event.key;
-  if (keyCode == "ArrowLeft") {
-    // player.EndMoveLeft();
-  } else if (keyCode == "ArrowRight") {
-    // player.EndMoveRight();
-  }
+  magnifier.SetPosition(
+    event.clientX - window.innerWidth / 2,
+    -event.clientY + window.innerHeight / 2
+  );
 }
 
 // Events
-window.addEventListener("resize", onWindowResize, false);
+window.addEventListener("resize", onWindowResize);
 function onWindowResize() {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
@@ -98,7 +96,6 @@ function renderLoop(timestamp: number) {
   );
   const duration = average_duration; // Can also be hardcoded to 0.016.
 
-  // GameLoop(duration, factor);
   os.Update(duration);
   magnifier.Update(duration);
   tablette.material.map!.needsUpdate = true;

@@ -1,45 +1,33 @@
+import * as THREE from "three";
+
 export class Os {
-  width = 640;
-  height = 480;
-  canvas = new Uint8Array(0);
+  // data;
+  canvas_texture;
+  icon_texture: undefined | THREE.Texture = undefined;
+  public constructor(public renderer: THREE.WebGLRenderer) {
+    const data = new Uint8Array(512 * 512 * 4);
+    this.canvas_texture = new THREE.DataTexture(data, 512, 512);
+    this.canvas_texture.minFilter = THREE.LinearFilter;
+    this.canvas_texture.generateMipmaps = false;
+    this.canvas_texture.needsUpdate = true;
+  }
+  public async Initialize() {
+    const loader = new THREE.TextureLoader();
+    this.icon_texture = await loader.loadAsync("resources/texture/sand.png");
+    this.icon_texture.minFilter = THREE.LinearFilter;
+    this.icon_texture.generateMipmaps = false;
+  }
 
-  mouse_x = 0;
-  mouse_y = 0;
-  mouse_down = false;
-
-  time = 0;
-
-  public Initialize() {
-    const num_pixels = this.width * this.height;
-    this.canvas = new Uint8Array(num_pixels * 4);
-    for (let i = 0; i < num_pixels; ++i) {
-      this.canvas[i * 4 + 0] = 255;
-      this.canvas[i * 4 + 1] = Math.floor((255 * i) / num_pixels);
-      this.canvas[i * 4 + 2] = 0;
-      this.canvas[i * 4 + 3] = 255;
+  public Update(_: number) {
+    if (this.icon_texture !== undefined) {
+      const position = new THREE.Vector2();
+      position.x = 0;
+      position.y = 512 - 20;
+      this.renderer.copyTextureToTexture(
+        position,
+        this.icon_texture,
+        this.canvas_texture
+      );
     }
-  }
-
-  public SetMousePosition(x: number, y: number, down: boolean) {
-    this.mouse_x = x;
-    this.mouse_y = y;
-    this.mouse_down = down;
-  }
-
-  public Update(frame_duration: number) {
-    this.time += frame_duration * 100;
-    while (this.time > 255) this.time -= 255;
-
-    const num_pixels = this.width * this.height;
-    for (let i = 0; i < num_pixels; ++i) {
-      this.canvas[i * 4 + 0] = Math.floor(this.time);
-      this.canvas[i * 4 + 1] = Math.floor((255 * i) / num_pixels);
-      this.canvas[i * 4 + 2] = Math.floor(this.time);
-      this.canvas[i * 4 + 3] = 255;
-    }
-  }
-
-  public GetBuffer() {
-    return this.canvas;
   }
 }
