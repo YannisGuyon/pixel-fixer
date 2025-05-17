@@ -93,6 +93,10 @@ document.addEventListener("keyup", (event: KeyboardEvent) => {
 // Events
 window.addEventListener("resize", onWindowResize);
 function onWindowResize() {
+  camera.left = Math.floor(window.innerWidth / -2);
+  camera.right = Math.floor(window.innerWidth / -2) + window.innerWidth;
+  camera.top = Math.floor(window.innerHeight / 2);
+  camera.bottom = Math.floor(window.innerHeight / 2) - window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
