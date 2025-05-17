@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { Magnifier } from "./magnifier";
+import { Simulation } from "./simulation";
 import { Os } from "./os";
 
 function CreateRenderer() {
@@ -22,6 +23,10 @@ function CreateRenderer() {
 
 const renderer: THREE.WebGLRenderer = CreateRenderer();
 renderer.setPixelRatio(window.devicePixelRatio);
+
+const width = 640;
+const height = 480;
+let simulation = new Simulation(renderer, width, height);
 
 // Environment
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -50,13 +55,11 @@ table.position.y = 0;
 table.position.z = -10;
 scene.add(table);
 
-const width = 640;
-const height = 480;
 const os = new Os(width, height, renderer);
 
 const tablette = new THREE.Mesh(
   new THREE.PlaneGeometry(width, height, 1),
-  new THREE.MeshStandardMaterial({ map: os.canvas_texture })
+  new THREE.MeshStandardMaterial({ map: os.canvas_texture})
 );
 tablette.position.x = 0;
 tablette.position.y = 0;
@@ -117,6 +120,7 @@ function renderLoop(timestamp: number) {
 
   os.Update(duration);
   magnifier.Update(duration);
+  simulation.Simulate();
   // tablette.material.map!.needsUpdate = true;
 
   document.getElementById("Fps")!.textContent =
