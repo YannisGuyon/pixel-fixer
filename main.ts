@@ -52,11 +52,12 @@ table.position.y = 0;
 table.position.z = -10;
 scene.add(table);
 
-const os = new Os(renderer);
-os.Initialize();
+const width = 640;
+const height = 480;
+const os = new Os(width, height, renderer);
 
 const tablette = new THREE.Mesh(
-  new THREE.PlaneGeometry(400, 200, 1),
+  new THREE.PlaneGeometry(width, height, 1),
   new THREE.MeshStandardMaterial({ map: os.canvas_texture })
 );
 tablette.position.x = 0;
@@ -66,13 +67,22 @@ scene.add(tablette);
 
 const magnifier = new Magnifier(scene);
 
-document.addEventListener("mousemove", onDocumentMouseMove, false);
-function onDocumentMouseMove(event: MouseEvent) {
+let is_mouse_down = false;
+document.addEventListener("mousedown", (event: MouseEvent) => {
+  is_mouse_down = true;
+  os.SetMouse(event.clientX, event.clientY, is_mouse_down);
+});
+document.addEventListener("mouseup", (event: MouseEvent) => {
+  is_mouse_down = false;
+  os.SetMouse(event.clientX, event.clientY, is_mouse_down);
+});
+document.addEventListener("mousemove", (event: MouseEvent) => {
+  os.SetMouse(event.clientX, event.clientY, is_mouse_down);
   magnifier.SetPosition(
     event.clientX - window.innerWidth / 2,
     -event.clientY + window.innerHeight / 2
   );
-}
+});
 
 // Events
 window.addEventListener("resize", onWindowResize);
@@ -98,7 +108,7 @@ function renderLoop(timestamp: number) {
 
   os.Update(duration);
   magnifier.Update(duration);
-  tablette.material.map!.needsUpdate = true;
+  // tablette.material.map!.needsUpdate = true;
 
   document.getElementById("Fps")!.textContent =
     average_duration.toString() + " s";
