@@ -72,11 +72,11 @@ export class Simulation {
     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
     
     const vsSource = `
-      attribute vec4 in_position;
+      attribute vec4 in_pos;
       varying vec2 vUv;
       void main() {
-        gl_Position = in_position;
-        vUv = in_position.xy*0.5+vec2(0.5);
+        gl_Position = in_pos;
+        vUv = in_pos.xy*0.5+vec2(0.5);
       }
     `;
 
@@ -107,9 +107,10 @@ export class Simulation {
     this.gl.linkProgram(this.program);
 
     this.positionBuffer = this.gl.createBuffer();
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
     const positions = [1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, -1.0];
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
     this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(positions), this.gl.STATIC_DRAW);
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
 
     const forceTextureInitialization = function() {
       const material = new THREE.MeshBasicMaterial();
@@ -140,18 +141,21 @@ export class Simulation {
   }
   Simulate() {
     const viewport = this.gl.getParameter(this.gl.VIEWPORT);
+    const binded_framebuffer = this.gl.getParameter(this.gl.FRAMEBUFFER_BINDING);
+    const binded_texture = this.gl.getParameter(this.gl.TEXTURE_BINDING_2D);
     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.current_frame===0?this.framebuffer_2:this.framebuffer_1);
     this.gl.bindTexture(this.gl.TEXTURE_2D, this.current_frame===0?this.texture_1:this.texture_2);
     this.gl.activeTexture(this.gl.TEXTURE0);
     this.gl.viewport(0, 0, this.texture_width, this.texture_height);
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
-    this.gl.vertexAttribPointer(this.gl.getAttribLocation(this.program, "in_position"), 2, this.gl.FLOAT, false, 0, 0);
-    this.gl.enableVertexAttribArray(this.gl.getAttribLocation(this.program, "in_position"));
     this.gl.useProgram(this.program);
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
+    this.gl.enableVertexAttribArray(this.gl.getAttribLocation(this.program, "in_pos"));
+    this.gl.vertexAttribPointer(this.gl.getAttribLocation(this.program, "in_pos"), 2, this.gl.FLOAT, false, 0, 0);
     this.gl.uniform2f(this.gl.getUniformLocation(this.program, "current_state_size"), this.texture_width, this.texture_height);
     this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
-    this.gl.bindTexture(this.gl.TEXTURE_2D, null);
-    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
+    this.gl.bindTexture(this.gl.TEXTURE_2D, binded_texture);
+    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, binded_framebuffer);
     this.current_frame = this.current_frame===0?1:0;
     this.gl.viewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 	}

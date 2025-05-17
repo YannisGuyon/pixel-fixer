@@ -48,7 +48,7 @@ scene.add(camera);
 
 const table = new THREE.Mesh(
   new THREE.PlaneGeometry(500, 250, 1, 1),
-  new THREE.MeshStandardMaterial({ color: 0xff0000 })
+  new THREE.MeshStandardMaterial({ color: 0x00ff00 })
 );
 table.position.x = 0;
 table.position.y = 0;
@@ -56,15 +56,6 @@ table.position.z = -10;
 scene.add(table);
 
 const os = new Os(width, height, renderer);
-
-const tablette = new THREE.Mesh(
-  new THREE.PlaneGeometry(width, height, 1),
-  new THREE.MeshStandardMaterial({ map: os.canvas_texture})
-);
-tablette.position.x = 0;
-tablette.position.y = 0;
-tablette.position.z = -9;
-scene.add(tablette);
 
 const magnifier = new Magnifier(scene);
 
@@ -107,6 +98,15 @@ document.addEventListener("keyup", (event: KeyboardEvent) => {
   }
 });
 
+let tablette = new THREE.Mesh(
+  new THREE.PlaneGeometry(width, height, 1),
+  new THREE.MeshStandardMaterial({ map: os.canvas_texture})
+);
+tablette.position.x = 0;
+tablette.position.y = 0;
+tablette.position.z = -9;
+scene.add(tablette);
+
 window.addEventListener("resize", onWindowResize);
 function onWindowResize() {
   camera.left = Math.floor(window.innerWidth / -2);
@@ -138,11 +138,23 @@ function renderLoop(timestamp: number) {
     magnifier.Release();
   }
   magnifier.Update(duration);
-  simulation.Simulate();
+  //tablette.material.map = simulation.GetTexture();
   // tablette.material.map!.needsUpdate = true;
 
   document.getElementById("Fps")!.textContent =
     average_duration.toString() + " s";
+
+  simulation.Simulate();
+
+  scene.remove(tablette);
+  tablette = new THREE.Mesh(
+    new THREE.PlaneGeometry(width, height, 1),
+    new THREE.MeshStandardMaterial({ map: simulation.GetTexture()})
+  );
+  tablette.position.x = 0;
+  tablette.position.y = 0;
+  tablette.position.z = -9;
+  scene.add(tablette);
 
   renderer.autoClear = false;
   renderer.clear();
