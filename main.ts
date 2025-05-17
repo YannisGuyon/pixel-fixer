@@ -32,10 +32,10 @@ const scene = new THREE.Scene();
 scene.add(new THREE.AmbientLight(0xffffff, 1.0));
 
 const camera = new THREE.OrthographicCamera(
-  window.innerWidth / -2,
-  window.innerWidth / 2,
-  window.innerHeight / 2,
-  window.innerHeight / -2,
+  Math.floor(window.innerWidth / -2),
+  Math.floor(window.innerWidth / -2) + window.innerWidth,
+  Math.floor(window.innerHeight / 2),
+  Math.floor(window.innerHeight / 2) - window.innerHeight,
   0,
   10
 );
