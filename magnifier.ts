@@ -78,7 +78,8 @@ function FragmentShaderPixel() {
     {
       vec2 norm_position_2d = position_2d*vec2(screen_ratio, 1.0);
       vec2 norm_magnifier_center = magnifier_center*vec2(screen_ratio, 1.0);
-      if (length(norm_position_2d-norm_magnifier_center)>0.2) {
+      float distance_from_center = length(norm_position_2d-norm_magnifier_center);
+      if (distance_from_center>0.2) {
         discard;
       }
       vec3 color = vec3(0.8, 0.4, 1.0);
