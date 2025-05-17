@@ -7,6 +7,7 @@ export class OsPanelEmails extends OsPanel {
   show_email_details = false;
   second_page_texture;
   no_connectivity_texture;
+  sound_404 = document.getElementById("Sound404")! as HTMLMediaElement;
 
   public constructor(name: string, x: number, y: number, enabled: boolean) {
     super(name, x, y, enabled);
@@ -52,6 +53,7 @@ export class OsPanelEmails extends OsPanel {
         mouse_y < this.final_position.y + this.texture.image.height - 55
       ) {
         this.show_email_details = true;
+        this.sound_404.play();
       }
     }
     return super.CollectEvent(mouse_x, mouse_y);

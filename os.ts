@@ -25,6 +25,25 @@ export class Os {
   mouse_pressed = false;
   mouse_released = false;
   data;
+  sound_swipe = document.getElementById("SoundSwipe")! as HTMLMediaElement;
+  sound_icon_notes = document.getElementById(
+    "SoundIconNotes"
+  )! as HTMLMediaElement;
+  sound_icon_clock = document.getElementById(
+    "SoundIconClock"
+  )! as HTMLMediaElement;
+  sound_icon_weather = document.getElementById(
+    "SoundIconWeather"
+  )! as HTMLMediaElement;
+  sound_icon_emails = document.getElementById(
+    "SoundIconEmails"
+  )! as HTMLMediaElement;
+  sound_xorcize_move = document.getElementById(
+    "SoundXorcizeMove"
+  )! as HTMLMediaElement;
+  sound_xorcize_success = document.getElementById(
+    "SoundXorcizeSuccess"
+  )! as HTMLMediaElement;
 
   public constructor(
     public width: number,
@@ -69,16 +88,22 @@ export class Os {
     this.toggles.push(new OsToggle(480, 90, false, false)); // Advanced tools
   }
 
-  public SetMouseMove(x: number, y: number) {
+  public IsMouseOverTabletScreen(x: number, y: number) {
     // Centered
     let tablet_x = Math.floor((window.innerWidth - this.width) / 2);
     let tablet_y = Math.floor((window.innerHeight - this.height) / 2);
-    if (
+    return (
       x >= tablet_x &&
       x < tablet_x + this.width &&
       y >= tablet_y &&
       y < tablet_y + this.height
-    ) {
+    );
+  }
+  public SetMouseMove(x: number, y: number) {
+    // Centered
+    let tablet_x = Math.floor((window.innerWidth - this.width) / 2);
+    let tablet_y = Math.floor((window.innerHeight - this.height) / 2);
+    if (this.IsMouseOverTabletScreen(x, y)) {
       this.mouse_x = x - tablet_x;
       this.mouse_y = this.height - (y - tablet_y);
     } else if (this.mouse_down) {
@@ -91,30 +116,14 @@ export class Os {
   }
 
   public SetMousePressed(x: number, y: number) {
-    // Centered
-    let tablet_x = Math.floor((window.innerWidth - this.width) / 2);
-    let tablet_y = Math.floor((window.innerHeight - this.height) / 2);
-    if (
-      x >= tablet_x &&
-      x < tablet_x + this.width &&
-      y >= tablet_y &&
-      y < tablet_y + this.height
-    ) {
+    if (this.IsMouseOverTabletScreen(x, y)) {
       this.mouse_pressed = true;
       this.mouse_released = false;
       this.mouse_down = true;
     }
   }
   public SetMouseReleased(x: number, y: number) {
-    // Centered
-    let tablet_x = Math.floor((window.innerWidth - this.width) / 2);
-    let tablet_y = Math.floor((window.innerHeight - this.height) / 2);
-    if (
-      x >= tablet_x &&
-      x < tablet_x + this.width &&
-      y >= tablet_y &&
-      y < tablet_y + this.height
-    ) {
+    if (this.IsMouseOverTabletScreen(x, y)) {
       this.mouse_pressed = false;
       this.mouse_released = true;
     } else {
@@ -126,6 +135,10 @@ export class Os {
   private CollectEvents() {
     if (this.panels[this.panels.length - 1].enabled) {
       for (let i = this.toggles.length - 1; i >= 0; --i) {
+        if (i === 0 && this.toggles[i].on) {
+          // Half killed already, do not toggle off
+          continue;
+        }
         if (this.toggles[i].CollectEvent(this.mouse_x, this.mouse_y)) {
           if (i == 0) {
             // Kill half pixels
@@ -143,6 +156,10 @@ export class Os {
       if (this.icons[i].CollectEvent(this.mouse_x, this.mouse_y)) {
         if (i < this.panels.length) {
           this.panels[i].enabled = true;
+          if (i === 0) this.sound_icon_notes.play();
+          if (i === 1) this.sound_icon_clock.play();
+          if (i === 2) this.sound_icon_weather.play();
+          if (i === 3) this.sound_icon_emails.play();
         } else if (i == this.icons.length - 2) {
           this.screen_is_locked = true;
         } else if (i == this.icons.length - 1) {
@@ -186,6 +203,8 @@ export class Os {
       ) {
         this.started_swiping_at_y = -1;
         this.screen_is_locked = false;
+
+        this.sound_swipe.play();
       } else if (this.mouse_pressed) {
         this.started_swiping_at_y = this.mouse_y;
       } else if (!this.mouse_down || this.mouse_y < this.started_swiping_at_y) {
@@ -202,10 +221,20 @@ export class Os {
         this.started_dragging_at_y = -1;
       } else if (
         this.started_dragging_at_x !== -1 &&
-        this.started_dragging_at_y !== -1
+        this.started_dragging_at_y !== -1 &&
+        (this.icons[6].overidden_position.x !== this.mouse_x ||
+          this.icons[6].overidden_position.y !== this.mouse_y)
       ) {
         this.icons[6].overidden_position.x = this.mouse_x;
         this.icons[6].overidden_position.y = this.mouse_y;
+        // TODO: Check Xorcize position against dead pixels here
+        //       and play sound in function
+        if (THREE.MathUtils.randInt(0, 20) == 0) {
+          this.sound_xorcize_success.currentTime = 0;
+          this.sound_xorcize_success.play();
+        } else {
+          this.sound_xorcize_move.play();
+        }
       }
 
       if (this.wallpaper_texture.image) {

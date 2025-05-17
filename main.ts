@@ -65,8 +65,22 @@ scene.add(tablette);
 
 const magnifier = new Magnifier(scene);
 
+// Sounds
+const sound_taps = [
+  document.getElementById("SoundTap1")! as HTMLMediaElement,
+  document.getElementById("SoundTap2")! as HTMLMediaElement,
+  document.getElementById("SoundTap3")! as HTMLMediaElement,
+  document.getElementById("SoundTap4")! as HTMLMediaElement,
+];
+
+// Events
 document.addEventListener("mousedown", (event: MouseEvent) => {
   os.SetMousePressed(event.clientX, event.clientY);
+  if (os.IsMouseOverTabletScreen(event.clientX, event.clientY)) {
+    const sound_tap =
+      sound_taps[THREE.MathUtils.randInt(0, sound_taps.length - 1)];
+    sound_tap.play();
+  }
 });
 document.addEventListener("mouseup", (event: MouseEvent) => {
   os.SetMouseReleased(event.clientX, event.clientY);
@@ -90,7 +104,6 @@ document.addEventListener("keyup", (event: KeyboardEvent) => {
   }
 });
 
-// Events
 window.addEventListener("resize", onWindowResize);
 function onWindowResize() {
   camera.left = Math.floor(window.innerWidth / -2);

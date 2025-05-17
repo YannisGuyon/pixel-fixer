@@ -6,6 +6,7 @@ export class OsToggle {
   position = new THREE.Vector2();
   final_position = new THREE.Vector2();
   rabid = false;
+  sound_toggle = document.getElementById("SoundToggle")! as HTMLMediaElement;
 
   public constructor(
     x: number,
@@ -34,6 +35,8 @@ export class OsToggle {
       mouse_y < this.final_position.y + this.texture_off.image.height
     ) {
       if (this.rabid) return true; // Capture but do nothing
+      this.sound_toggle.currentTime = 0;
+      this.sound_toggle.play();
       this.on = !this.on;
       if (this.on && this.turns_rabid_when_toggled) {
         this.rabid = true;
