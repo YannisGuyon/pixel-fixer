@@ -186,7 +186,12 @@ magnifier.SetVisible(false);
 // Sounds
 let first_interaction = false;
 const sound_track = document.getElementById("SoundTrack")! as HTMLMediaElement;
-const sound_taps = [document.getElementById("SoundTap")! as HTMLMediaElement];
+const sounds_tap = [document.getElementById("SoundTap")! as HTMLMediaElement];
+const sounds_pixel = [
+  document.getElementById("SoundPixel1")! as HTMLMediaElement,
+  document.getElementById("SoundPixel2")! as HTMLMediaElement,
+  document.getElementById("SoundPixel3")! as HTMLMediaElement,
+];
 
 // Overlays
 const game_over_overlay = document.getElementById(
@@ -202,7 +207,10 @@ for (const retry_button of document.getElementsByClassName("RetryButton")) {
 }
 
 // Events
+const mouse_position = new THREE.Vector2(0, 0);
 document.addEventListener("mousedown", (event: MouseEvent) => {
+  mouse_position.x = event.clientX;
+  mouse_position.y = event.clientY;
   if (!success_overlay.hidden || !game_over_overlay.hidden) return;
   if (
     os.MagnifierSettingIsOn() &&
@@ -230,7 +238,7 @@ document.addEventListener("mousedown", (event: MouseEvent) => {
   os.SetMousePressed(event.clientX, event.clientY);
   if (arm_press.visible) {
     const sound_tap =
-      sound_taps[THREE.MathUtils.randInt(0, sound_taps.length - 1)];
+      sounds_tap[THREE.MathUtils.randInt(0, sounds_tap.length - 1)];
     sound_tap.play();
     if (
       os.IsMouseOverTabletScreen(event.clientX, event.clientY) &&
@@ -243,6 +251,8 @@ document.addEventListener("mousedown", (event: MouseEvent) => {
   }
 });
 document.addEventListener("mouseup", (event: MouseEvent) => {
+  mouse_position.x = event.clientX;
+  mouse_position.y = event.clientY;
   if (!success_overlay.hidden || !game_over_overlay.hidden) return;
   if (arm_magnifier.visible) {
     arm_release.visible = false;
@@ -254,6 +264,8 @@ document.addEventListener("mouseup", (event: MouseEvent) => {
   os.SetMouseReleased(event.clientX, event.clientY);
 });
 document.addEventListener("mousemove", (event: MouseEvent) => {
+  mouse_position.x = event.clientX;
+  mouse_position.y = event.clientY;
   if (!success_overlay.hidden || !game_over_overlay.hidden) return;
   os.SetMouseMove(event.clientX, event.clientY);
   if (
@@ -333,6 +345,18 @@ function renderLoop(timestamp: number) {
     if (simulation.AreMostPixelsDead()) {
       game_over_overlay.hidden = false;
     }
+  }
+
+  if (
+    success_overlay.hidden &&
+    game_over_overlay.hidden &&
+    arm_magnifier.visible &&
+    os.IsMouseOverTabletScreen(mouse_position.x, mouse_position.y) &&
+    THREE.MathUtils.randInt(0, 63) == 0
+  ) {
+    const sound_pixel =
+      sounds_pixel[THREE.MathUtils.randInt(0, sounds_pixel.length - 1)];
+    sound_pixel.play();
   }
 
   renderer.autoClear = false;
