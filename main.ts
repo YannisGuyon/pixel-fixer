@@ -292,7 +292,7 @@ document.addEventListener("mousemove", (event: MouseEvent) => {
       event.clientX - window.innerWidth / 2,
       -event.clientY + window.innerHeight / 2
     );
-    magnifier.SetPixels(GetACroppedRegionOfTheScreenColorAndOfTheSimulation());
+    magnifier.SetPixels(GetACroppedRegionOfTheScreenColorAndOfTheSimulation(mouse_position.x, mouse_position.y, magnifier.pixel_count, magnifier.pixel_count));
   }
 });
 

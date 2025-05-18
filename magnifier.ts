@@ -302,26 +302,20 @@ export class Magnifier {
   private magnifier_zombie_material: THREE.ShaderMaterial;
   private magnifier_alive_material: THREE.ShaderMaterial;
   private magnifier_dead_material: THREE.ShaderMaterial;
-  private pixelsContent: Uint8Array;
   private pixels: THREE.Mesh[][];
   private pixel_size: number;
-  private pixel_count: number;
+  public pixel_count: number;
   private is_grabbed: boolean;
   public is_enabled: boolean;
   private initial_position_x: number;
   private initial_position_y: number;
-  private current_mouse_position_x: number;
-  private current_mouse_position_y: number;
   public constructor(scene: THREE.Scene) {
     this.scene = scene;
     this.pixels = [];
     this.pixel_count = 7;
-    this.pixelsContent = new Uint8Array(this.pixel_count * this.pixel_count * (4 + 4));
     this.pixel_size = 90;
     this.initial_position_x = 500;
     this.initial_position_y = 0;
-    this.current_mouse_position_x = 0;
-    this.current_mouse_position_y = 0;
     this.is_grabbed = false;
     this.is_enabled = false;
     this.magnifier_zombie_material = new THREE.ShaderMaterial({
@@ -388,7 +382,7 @@ export class Magnifier {
         return this.magnifier_zombie_material;
     }
   }
-  Update(time: number, pixelGrid?: pixelState[]) {
+  Update(time: number) {
     this.magnifier_zombie_material.uniforms.time.value = 0.5+time*0.0001;
     this.magnifier_zombie_material.uniforms.screen_ratio.value = window.innerWidth/window.innerHeight;
     this.magnifier_dead_material.uniforms.time.value = 0.5+time*0.0001;
@@ -405,7 +399,6 @@ export class Magnifier {
   }
   SetPixels(pixelsContent: Uint8Array){
     for (let x=0; x<this.pixel_count; x++) {
-      this.pixels[x] = [];
       for (let y=0; y<this.pixel_count; y++) {
         this.pixels[x][y].material = this.mapPixelStateToShaderMaterial(pixelsContent[(x*this.pixel_count+y)*8+4], pixelsContent[(x*this.pixel_count+y)*8+6]);
         this.pixels[x][y].geometry.setAttribute('uid', new THREE.Uint8BufferAttribute([x,y,x,y, x,y,x,y], 2));
@@ -416,14 +409,12 @@ export class Magnifier {
         this.pixels[x][y].position.x = 10000+x*this.pixel_size-this.pixel_size*Math.floor(this.pixel_count*0.5);
         this.pixels[x][y].position.y = 10000+y*this.pixel_size-this.pixel_size*Math.floor(this.pixel_count*0.5);
         this.pixels[x][y].position.z = -8;
-        this.pixels[x][y].visible = pixelsContent[(x*this.pixel_count+y)*8 + 7] === 255;
+        this.pixels[x][y].visible = true;//pixelsContent[(x*this.pixel_count+y)*8 + 7] === 255;
         this.scene.add(this.pixels[x][y]);
       }
     }
   }
   SetPosition(center_x: number, center_y:number) {
-    this.current_mouse_position_x = center_x;
-    this.current_mouse_position_y = center_y;
     let new_center_x = this.initial_position_x;
     let new_center_y = this.initial_position_y;
     if (!this.is_enabled) {
