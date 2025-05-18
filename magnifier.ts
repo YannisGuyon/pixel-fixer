@@ -417,11 +417,11 @@ export class Magnifier {
   SetPixels(pixelsContent: Uint8Array){
     for (let x=0; x<this.pixel_count; x++) {
       for (let y=0; y<this.pixel_count; y++) {
-        this.pixels[x][y].material = this.mapPixelStateToShaderMaterial(pixelsContent[(x*this.pixel_count+y)*8+4], pixelsContent[(x*this.pixel_count+y)*8+6]);
+        this.pixels[x][y].material = this.mapPixelStateToShaderMaterial(pixelsContent[(y*this.pixel_count+x)*8+4], pixelsContent[(y*this.pixel_count+x)*8+6]);
 
-        let r = pixelsContent[(x*this.pixel_count+y)*8];
-        let g = pixelsContent[(x*this.pixel_count+y)*8 + 1];
-        let b = pixelsContent[(x*this.pixel_count+y)*8 + 2];
+        let r = pixelsContent[(y*this.pixel_count+x)*8];
+        let g = pixelsContent[(y*this.pixel_count+x)*8 + 1];
+        let b = pixelsContent[(y*this.pixel_count+x)*8 + 2];
 
         for (let i = 0; i< 4;++i) {
           this.attributes_uid_array[x][y][i*2+0] = x;
@@ -443,7 +443,7 @@ export class Magnifier {
         this.pixels[x][y].position.x = x*this.pixel_size-this.pixel_size*Math.floor(this.pixel_count*0.5);
         this.pixels[x][y].position.y = y*this.pixel_size-this.pixel_size*Math.floor(this.pixel_count*0.5);
         this.pixels[x][y].position.z = -8;
-        this.pixels[x][y].visible = pixelsContent[(x*this.pixel_count+y)*8 + 7] === 255;
+        this.pixels[x][y].visible = pixelsContent[(y*this.pixel_count+x)*8 + 7] === 255;
       }
     }
   }
