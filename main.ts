@@ -63,7 +63,7 @@ const os = new Os(width, height, renderer, simulation);
 let tablette = new THREE.Mesh(
   new THREE.PlaneGeometry(width, height, 1),
   //new THREE.MeshStandardMaterial({ map: os.canvas_texture})
-  new THREE.MeshStandardMaterial({ map: simulation.GetTexture()})
+  new THREE.MeshStandardMaterial({ map: simulation.GetTexture() })
 );
 tablette.position.x = 0;
 tablette.position.y = 0;
@@ -170,10 +170,15 @@ document.addEventListener("mousedown", (event: MouseEvent) => {
     first_interaction = true;
   }
   os.SetMousePressed(event.clientX, event.clientY);
-  if (os.IsMouseOverTabletScreen(event.clientX, event.clientY)) {
+  if (arm_press.visible) {
     const sound_tap =
       sound_taps[THREE.MathUtils.randInt(0, sound_taps.length - 1)];
     sound_tap.play();
+    if (os.IsMouseOverTabletScreen(event.clientX, event.clientY)) {
+      const x = os.GetMouseXInTabletScreenSpace(event.clientX);
+      const y = os.GetMouseYInTabletScreenSpace(event.clientY);
+      simulation.PressScreen(x, y);
+    }
   }
 });
 document.addEventListener("mouseup", (event: MouseEvent) => {
@@ -190,7 +195,16 @@ document.addEventListener("mouseup", (event: MouseEvent) => {
 document.addEventListener("mousemove", (event: MouseEvent) => {
   if (!success_overlay.hidden || !game_over_overlay.hidden) return;
   os.SetMouseMove(event.clientX, event.clientY);
-  console.log(window.innerHeight);
+  if (
+    arm_press.visible &&
+    os.IsMouseOverTabletScreen(event.clientX, event.clientY)
+  ) {
+    const x = os.GetMouseXInTabletScreenSpace(event.clientX);
+    const y = os.GetMouseYInTabletScreenSpace(event.clientY);
+    simulation.PressScreen(x, y);
+    // TODO: Also call PressScreen() on all pixels from last PressScreen()
+    //       position in a line if not interrupted
+  }
   arm_release.position.x =
     event.clientX - 350 - window.innerWidth / 2 + 960 / 2;
   arm_release.position.y =
