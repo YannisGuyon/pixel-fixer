@@ -25,6 +25,11 @@ export class Simulation {
   private texture_width: number;
   private texture_height: number;
   private texture_three_js: THREE.Texture;
+
+  private retrieved_buffer;
+  private num_pixels;
+  private num_alive_pixels;
+
   public constructor(renderer: THREE.WebGLRenderer, width: number, height: number) {
     this.gl = renderer.getContext();
     this.texture_input = this.gl.createTexture();
@@ -213,6 +218,10 @@ export class Simulation {
     forceTextureInitialization(this.texture_three_js);
     let texProps = renderer.properties.get(this.texture_three_js);
     texProps.__webglTexture = this.texture_input;
+
+    this.num_pixels = this.texture_width * this.texture_height;
+    this.num_alive_pixels = 0;
+    this.retrieved_buffer = new Uint8Array(this.num_pixels * 4);
   }
 
   Simulate(zombification_speed: number) {
@@ -231,6 +240,14 @@ export class Simulation {
     this.gl.bindTexture(this.gl.TEXTURE_2D, binded_texture);
     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, binded_framebuffer);
     this.gl.viewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+
+    this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture_input);
+    this.gl.readPixels(0, 0, this.texture_width, this.texture_height, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.retrieved_buffer);
+    this.num_alive_pixels = this.num_pixels - 1;
+    for (let i = 0; i < this.num_pixels; ++i) {
+      if (this.retrieved_buffer[i * 4] === 255) ++this.num_alive_pixels;
+    }
+    // console.log(this.num_alive_pixels);  // TODO: Fix
 	}
 
   PressScreen(x:number, y:number) {
@@ -268,18 +285,18 @@ export class Simulation {
     this.gl.bindTexture(this.gl.TEXTURE_2D, binded_texture);
     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, binded_framebuffer);
     this.gl.viewport(viewport[0], viewport[1], viewport[2], viewport[3]);
-    let is_pixel_healde = 1;
-    return is_pixel_healde;
+    let is_pixel_healed = 1;
+    return is_pixel_healed;
   }
 
   GetTexture() {
     return this.texture_three_js;
   }
   AreAllPixelsAlive() {
-    return false;  // TODO
+    return this.num_alive_pixels === this.num_pixels;
   }
   AreMostPixelsDead() {
-    return true;  // TODO
+    return this.num_alive_pixels < this.num_pixels * 0.1;
   }
   InstantlyKillMostPixels() {
     // TODO
