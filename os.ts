@@ -115,6 +115,7 @@ export class Os {
       this.started_dragging_at_x !== -1 && this.started_dragging_at_y !== -1
     );
   }
+  // Clamped
   public GetMouseXInTabletScreenSpace(x: number) {
     let tablet_x = Math.floor((window.innerWidth - this.width) / 2);
     return Math.max(0, Math.min((x - tablet_x) / (this.width - 1), 1));
@@ -123,6 +124,7 @@ export class Os {
     let tablet_y = Math.floor((window.innerHeight - this.height) / 2);
     return 1 - Math.max(0, Math.min((y - tablet_y) / (this.height - 1), 1));
   }
+  // Not clamped
   public GetMouseXInTabletScreenSpaceInteger(x: number) {
     return x - Math.floor((window.innerWidth - this.width) / 2);
   }

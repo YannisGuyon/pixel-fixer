@@ -383,6 +383,6 @@ export class Simulation {
   }
 
   AreMostPixelsDead() {
-    return this.num_alive_pixels < this.num_pixels * 0.1;
+    return this.num_alive_pixels < this.num_pixels * 0.05;
   }
 }
