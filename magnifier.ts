@@ -31,7 +31,11 @@ function FragmentShaderDeadPixel() {
     uniform vec2 magnifier_center;
     uniform float screen_ratio;
     varying vec2 vUv;
+    varying vec2 vUid;
     varying vec2 position_2d;
+    float rand(vec2 co){
+      return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
+    }
     float sdRoundedX( in vec2 p, in float w, in float r )
     {
         p = abs(p);
@@ -65,9 +69,9 @@ function FragmentShaderDeadPixel() {
               sign(ik*(pos.y-he)+pos.x*pos.x);
     }
 
-    vec3 Eye(in vec3 color, vec2 uv, vec2 position) {
+    vec3 Eye(in vec3 color, vec2 uv, vec2 position, float size) {
       vec3 out_color = color;
-      if (sdRoundedX(uv-position, 0.17, 0.022) < 0.0) {
+      if (sdRoundedX(uv-position, size, 0.022) < 0.0) {
         out_color = vec3(0.0, 0.0, 0.0);
       }
       return out_color;
@@ -92,8 +96,8 @@ function FragmentShaderDeadPixel() {
         gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
       } else {
         vec2 lookat = vec2(0.5);
-        color = Eye(color, vUv, vec2(0.38, 0.6));
-        color = Eye(color, vUv, vec2(0.62, 0.6));
+        color = Eye(color, vUv, vec2(0.38, 0.6), 0.12);
+        color = Eye(color, vUv, vec2(0.62, 0.6), 0.34 * max(0.6, rand(vUid)));
         color = Mouth(color, vUv, vec2(0.5, 0.25));
         gl_FragColor = vec4(color, 1.0);
       }
@@ -306,7 +310,7 @@ export class Magnifier {
   public constructor(scene: THREE.Scene) {
     this.scene = scene;
     this.pixels = [];
-    this.pixel_state_grid = [[pixelState.alive, pixelState.dead, pixelState.alive],[pixelState.alive, pixelState.dead, pixelState.alive], [pixelState.alive, pixelState.zombie, pixelState.alive]];
+    this.pixel_state_grid = [[pixelState.dead, pixelState.dead, pixelState.dead],[pixelState.dead, pixelState.dead, pixelState.alive], [pixelState.alive, pixelState.zombie, pixelState.alive]];
     this.pixel_size = 40;
     this.pixel_count = 3;
     this.initial_position_x = 500;
@@ -377,6 +381,13 @@ export class Magnifier {
     this.magnifier_dead_material.uniforms.screen_ratio.value = window.innerWidth/window.innerHeight;
     this.magnifier_alive_material.uniforms.time.value = 0.5+time*0.0001;
     this.magnifier_alive_material.uniforms.screen_ratio.value = window.innerWidth/window.innerHeight;
+
+     for (let x=0; x<this.pixel_count; x++) {
+      for (let y=0; y<this.pixel_count; y++) {
+        this.pixels[x][y].scale.x = Math.sin(Date.now()*0.01+(x*y)+x)*0.2+0.8;
+        this.pixels[x][y].scale.y = Math.sin(Date.now()*0.01+(x*y)+x)*0.2+0.8;
+      }
+    }
   }
   SetPosition(center_x: number, center_y:number) {
     this.current_mouse_position_x = center_x;
