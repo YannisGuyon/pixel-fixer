@@ -188,7 +188,7 @@ document.addEventListener("mousedown", (event: MouseEvent) => {
   ) {
     arm_magnifier.visible = !arm_magnifier.visible;
     magnifier.SetVisible(arm_magnifier.visible);
-    
+
     arm_magnifier.visible ? magnifier.Grab() : magnifier.Release();
   }
   if (arm_magnifier.visible) {
@@ -294,7 +294,12 @@ function renderLoop(timestamp: number) {
   document.getElementById("Fps")!.textContent =
     average_duration.toString() + " s";
 
-  simulation.Simulate(2 / 255);
+  const infection_propagation_speed =
+    simulation.GetNumDeadPixels() < 6
+      ? 0
+      : 1 +
+        simulation.GetDeadPixelRatio() * simulation.GetDeadPixelRatio() * 20;
+  simulation.Simulate(infection_propagation_speed / 255);
 
   if (simulation.AreAllPixelsAlive()) {
     success_overlay.hidden = false;
