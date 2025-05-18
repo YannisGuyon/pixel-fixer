@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import { Magnifier } from "./magnifier";
 import { MagnifierFisheye } from "./magnifier_fisheye";
 import { MagnifierFisheyeTablet } from "./magnifier_fisheye_tablet";
 import { Simulation } from "./simulation";
@@ -61,52 +60,6 @@ table.position.z = -10;
 scene.add(table);
 
 const os = new Os(width, height, renderer, simulation);
-
-let gl = renderer.getContext();
-function GetACroppedRegionOfTheScreenColorAndOfTheSimulation(x: number, y: number, w: number, h: number) {
-  // data[(pixel_y*7+pixel_x)*8 + 0] -> Red color
-  // data[(pixel_y*7+pixel_x)*8 + 1] -> Green color
-  // data[(pixel_y*7+pixel_x)*8 + 2] -> Blue color
-  // data[(pixel_y*7+pixel_x)*8 + 3] -> Alpha color
-  // data[(pixel_y*7+pixel_x)*8 + 4] -> State (255 -> Alive | 0 -> Dead)
-  // data[(pixel_y*7+pixel_x)*8 + 5] -> A timestamp
-  // data[(pixel_y*7+pixel_x)*8 + 6] -> Is Zombie (255 -> Yes | 0 -> No)
-  // data[(pixel_y*7+pixel_x)*8 + 7] -> Visibility (255 -> Yes | 0 -> No)
-  let pixel_state = simulation.GetCPUTexture();
-  os.canvas_texture_webgl = renderer.properties.get(os.canvas_texture).__webglTexture;
-  if (os.canvas_texture_webgl !== undefined) {
-    gl.bindFramebuffer(gl.FRAMEBUFFER, os.framebuffer_to_read_the_CPU_texture);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, os.canvas_texture_webgl, 0);
-    if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) == gl.FRAMEBUFFER_COMPLETE) {
-      gl.readPixels(0, 0, os.width, os.height, gl.RGBA, gl.UNSIGNED_BYTE, os.canvas_texture_cpu);
-      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, null, 0);
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    }
-  }
-
-  const data = new Uint8Array(w * h * (4 + 4));
-  for (let i=0; i<w; i++) {
-    for (let j=0; j<h; j++) {
-      const pixel_x = x+i-w/2;
-      const pixel_y = os.height-y+j-h/2;
-      if (pixel_x < 0 || pixel_x > os.width-w*0.5 || pixel_y < 0 || pixel_y > os.height-h*0.5) {
-        for (let k=0; k<8; k++) {
-          data[(j*w+i)*8+k] = 0;
-        }
-      } else {
-        data[(j*w+i)*8 + 0] = os.canvas_texture_cpu[(pixel_y*os.width+pixel_x)*4 + 0];
-        data[(j*w+i)*8 + 1] = os.canvas_texture_cpu[(pixel_y*os.width+pixel_x)*4 + 1];
-        data[(j*w+i)*8 + 2] = os.canvas_texture_cpu[(pixel_y*os.width+pixel_x)*4 + 2];
-        data[(j*w+i)*8 + 3] = os.canvas_texture_cpu[(pixel_y*os.width+pixel_x)*4 + 3];
-        data[(j*w+i)*8 + 4] = pixel_state[(pixel_y*os.width+pixel_x)*4 + 0];
-        data[(j*w+i)*8 + 5] = pixel_state[(pixel_y*os.width+pixel_x)*4 + 1];
-        data[(j*w+i)*8 + 6] = pixel_state[(pixel_y*os.width+pixel_x)*4 + 2];
-        data[(j*w+i)*8 + 7] = 255;
-      }
-    }
-  }
-  return data;
-}
 
 let tablette_shader = new THREE.ShaderMaterial({
   uniforms: {
@@ -192,8 +145,6 @@ the_magnifier.material.transparent = true;
 scene.add(the_magnifier);
 the_magnifier.visible = false;
 
-const magnifier = new Magnifier(scene);
-magnifier.SetVisible(false);
 const magnifier_fisheye = new MagnifierFisheye(scene);
 magnifier_fisheye.SetVisible(false);
 const magnifier_fisheye_tablet = new MagnifierFisheyeTablet(
@@ -343,18 +294,6 @@ document.addEventListener("mousemove", (event: MouseEvent) => {
 
 function SetMagnifiersPositions(x:number, y:number) {
   if (arm_magnifier.visible) {
-    magnifier.SetPixels(
-      GetACroppedRegionOfTheScreenColorAndOfTheSimulation(
-        os.GetMouseXInTabletScreenSpaceInteger(mouse_position.x),
-        os.GetMouseYInTabletScreenSpaceInteger(mouse_position.y),
-        magnifier.pixel_count,
-        magnifier.pixel_count
-      )
-    );
-    magnifier.SetPosition(
-      x - window.innerWidth / 2,
-      -y + window.innerHeight / 2
-    );
     magnifier_fisheye.SetPosition(
       (x + 2016 / 2 - window.innerWidth / 2) / 2016,
       (-y + 1512 / 2 + window.innerHeight / 2) / 1512
@@ -406,12 +345,6 @@ function renderLoop(timestamp: number) {
   the_magnifier.visible = os.MagnifierSettingIsOn() && !arm_magnifier.visible;
   magnifier_fisheye.SetVisible(os.MagnifierSettingIsOn());
   magnifier_fisheye_tablet.SetVisible(os.MagnifierSettingIsOn());
-
-  if (magnifier.is_enabled !== os.MagnifierSettingIsOn()) {
-    magnifier.is_enabled = os.MagnifierSettingIsOn();
-  }
-  magnifier.Update(duration);
-  // tablette.material.map!.needsUpdate = true;
 
   document.getElementById("Fps")!.textContent =
     average_duration.toString() + " s";
