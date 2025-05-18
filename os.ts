@@ -176,11 +176,15 @@ export class Os {
     }
   }
 
-  public Update(duration: number) {
+  public Update(duration: number, disable_all_interactions: boolean) {
     this.icons[6].enabled = this.toggles[4].on;
 
-    for (let i = 0; i < this.width * this.height * 4; ++i) this.data[i] = 255;
-    this.canvas_texture.needsUpdate = true;
+    if (disable_all_interactions) {
+      this.mouse_pressed = false;
+      this.mouse_released = false;
+      return;
+    }
+
     if (this.mouse_pressed) {
       for (const icon of this.icons) {
         icon.Reset();

@@ -16,7 +16,6 @@ function loadShader(gl:WebGLRenderingContext|WebGL2RenderingContext, type:GLenum
 
 export class Simulation {
   private gl: WebGLRenderingContext|WebGL2RenderingContext;
-  private positionBuffer: WebGLBuffer;
   private program: WebGLProgram;
   private framebuffer_1: WebGLFramebuffer;
   private framebuffer_2: WebGLFramebuffer;
@@ -71,32 +70,43 @@ export class Simulation {
     this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, attachmentPoint, this.gl.TEXTURE_2D, this.texture_2, 0);
     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
     
-    const vsSource = `
-      attribute vec4 in_pos;
-      varying vec2 vUv;
+    const vsSource = `#version 300 es
+      out vec2 vUv;
       void main() {
-        gl_Position = in_pos;
-        vUv = in_pos.xy*0.5+vec2(0.5);
+        if (gl_VertexID == 0) {
+          gl_Position = vec4(1.0, 1.0, 0.0, 1.0);
+          vUv = vec2(0.0, 0.0);
+        } else if (gl_VertexID == 1) {
+          gl_Position = vec4(-1.0, 1.0, 0.0, 1.0);
+          vUv = vec2(1.0, 0.0);
+        } else if (gl_VertexID == 2) {
+          gl_Position = vec4(1.0, -1.0, 0.0, 1.0);
+          vUv = vec2(0.0, 1.0);
+        } else {
+          gl_Position = vec4(-1.0, -1.0, 0.0, 1.0);
+          vUv = vec2(1.0, 1.0);
+        }
       }
     `;
 
-    const fsSource = `
+    const fsSource = `#version 300 es
       precision highp float;
-      varying vec2 vUv;
+      in vec2 vUv;
+      out vec4 out_color;
 		  uniform sampler2D current_state;
 		  uniform vec2 current_state_size;
       void main() {
         vec2 pixel_size = vec2(1.0/current_state_size.x, 1.0/current_state_size.y);
-        vec4 data00 = texture2D(current_state, vUv+vec2(-pixel_size.x, -pixel_size.y));
-        vec4 data10 = texture2D(current_state, vUv+vec2(pixel_size.x, -pixel_size.y));
-        vec4 data01 = texture2D(current_state, vUv+vec2(-pixel_size.x, pixel_size.y));
-        vec4 data11 = texture2D(current_state, vUv+vec2(pixel_size.x, pixel_size.y));
-        vec4 data = texture2D(current_state, vUv);
+        vec4 data00 = texture(current_state, vUv+vec2(-pixel_size.x, -pixel_size.y));
+        vec4 data10 = texture(current_state, vUv+vec2(pixel_size.x, -pixel_size.y));
+        vec4 data01 = texture(current_state, vUv+vec2(-pixel_size.x, pixel_size.y));
+        vec4 data11 = texture(current_state, vUv+vec2(pixel_size.x, pixel_size.y));
+        vec4 data = texture(current_state, vUv);
         if (data00.r > 0.0 || data10.r > 0.0 || data01.r > 0.0 || data11.r > 0.0) {
           data.r = 1.0;
           data.g = 0.0;
         }
-        gl_FragColor = data;
+        out_color = data;
       }
     `;
     const vertexShader = loadShader(this.gl, this.gl.VERTEX_SHADER, vsSource);
@@ -106,11 +116,11 @@ export class Simulation {
     this.gl.attachShader(this.program, fragmentShader!);
     this.gl.linkProgram(this.program);
 
-    this.positionBuffer = this.gl.createBuffer();
-    const positions = [1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, -1.0];
+    /*this.positionBuffer = this.gl.createBuffer();
+    const positions = [1.0, 1.0, 0.0, -1.0, 1.0, 0.0, 1.0, -1.0, 0.0, -1.0, -1.0, 0.0];
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
     this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(positions), this.gl.STATIC_DRAW);
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);*/
 
     const forceTextureInitialization = function() {
       const material = new THREE.MeshBasicMaterial();
@@ -148,12 +158,13 @@ export class Simulation {
     this.gl.activeTexture(this.gl.TEXTURE0);
     this.gl.viewport(0, 0, this.texture_width, this.texture_height);
     this.gl.useProgram(this.program);
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
-    this.gl.enableVertexAttribArray(this.gl.getAttribLocation(this.program, "in_pos"));
-    this.gl.vertexAttribPointer(this.gl.getAttribLocation(this.program, "in_pos"), 2, this.gl.FLOAT, false, 0, 0);
+    //this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
+    //this.gl.enableVertexAttribArray(this.gl.getAttribLocation(this.program, "in_pos"));
+    //this.gl.vertexAttribPointer(0, 3, this.gl.FLOAT, false, 0, 0);
+    //this.gl.vertexAttribPointer(this.gl.getAttribLocation(this.program, "in_pos"), 2, this.gl.FLOAT, false, 0, 0);
     this.gl.uniform2f(this.gl.getUniformLocation(this.program, "current_state_size"), this.texture_width, this.texture_height);
     this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
+    //this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
     this.gl.bindTexture(this.gl.TEXTURE_2D, binded_texture);
     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, binded_framebuffer);
     this.current_frame = this.current_frame===0?1:0;
