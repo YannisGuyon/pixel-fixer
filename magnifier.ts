@@ -16,6 +16,7 @@ function VertexShaderPixel() {
     }
     varying vec2 vUv;
     varying vec2 vUid;
+    varying vec3 vColor;
     varying vec2 position_2d;
     void main() {
       gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
@@ -313,7 +314,7 @@ export class Magnifier {
     this.scene = scene;
     this.pixels = [];
     this.pixel_count = 7;
-    this.pixel_size = 90;
+    this.pixel_size = 40;
     this.initial_position_x = 500;
     this.initial_position_y = 0;
     this.is_grabbed = false;
@@ -406,11 +407,10 @@ export class Magnifier {
         let g = pixelsContent[(x*this.pixel_count+y)*8 + 1];
         let b = pixelsContent[(x*this.pixel_count+y)*8 + 2];
         this.pixels[x][y].geometry.setAttribute('color', new THREE.Uint8BufferAttribute([r,g,b,r,g,b,r,g,b,r,g,b], 3));
-        this.pixels[x][y].position.x = 10000+x*this.pixel_size-this.pixel_size*Math.floor(this.pixel_count*0.5);
-        this.pixels[x][y].position.y = 10000+y*this.pixel_size-this.pixel_size*Math.floor(this.pixel_count*0.5);
+        this.pixels[x][y].position.x = x*this.pixel_size-this.pixel_size*Math.floor(this.pixel_count*0.5);
+        this.pixels[x][y].position.y = y*this.pixel_size-this.pixel_size*Math.floor(this.pixel_count*0.5);
         this.pixels[x][y].position.z = -8;
-        this.pixels[x][y].visible = true;//pixelsContent[(x*this.pixel_count+y)*8 + 7] === 255;
-        this.scene.add(this.pixels[x][y]);
+        this.pixels[x][y].visible = pixelsContent[(x*this.pixel_count+y)*8 + 7] === 255;
       }
     }
   }
