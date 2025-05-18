@@ -7,6 +7,11 @@ import { Simulation } from "./simulation";
 
 export class Os {
   canvas_texture;
+
+  framebuffer_to_read_the_CPU_texture;
+  canvas_texture_webgl: WebGLTexture|null;
+  canvas_texture_cpu;
+
   wallpaper_texture;
   wallpaper_texture_position = new THREE.Vector2(0, 0);
 
@@ -16,8 +21,6 @@ export class Os {
 
   started_dragging_at_x = -1;
   started_dragging_at_y = -1;
-
-  private retrieved_buffer;
 
   icons = new Array<OsIcon>();
   panels = new Array<OsPanel>();
@@ -62,7 +65,9 @@ export class Os {
     this.canvas_texture.needsUpdate = true;
     this.canvas_texture.flipY = true;
 
-    this.retrieved_buffer = new Uint8Array(width * height * 4);
+    this.canvas_texture_cpu = new Uint8Array(width*height*4);
+    this.framebuffer_to_read_the_CPU_texture = renderer.getContext().createFramebuffer();
+    this.canvas_texture_webgl = null;
 
     const loader = new THREE.TextureLoader();
     this.wallpaper_texture = loader.load(`resources/texture/wallpaper.png`);
@@ -286,15 +291,9 @@ export class Os {
 
     this.mouse_pressed = false;
     this.mouse_released = false;
-
-    this.canvas_texture.userData
   }
 
   public MagnifierSettingIsOn() {
     return this.toggles[3].on;
-  }
-
-  GetCPUTexture() {
-    return this.retrieved_buffer;
   }
 }

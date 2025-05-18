@@ -60,9 +60,8 @@ scene.add(table);
 
 const os = new Os(width, height, renderer, simulation);
 
-function GetACroppedRegionOfTheScreenColorAndOfTheSimulation(/*x: number, y: number*/) {
-  //const pixel_state = simulation.GetCPUTexture();
-
+let gl = renderer.getContext();
+function GetACroppedRegionOfTheScreenColorAndOfTheSimulation(x: number, y: number, w: number, h: number) {
   // data[(pixel_y*7+pixel_x)*8 + 0] -> Red color
   // data[(pixel_y*7+pixel_x)*8 + 1] -> Green color
   // data[(pixel_y*7+pixel_x)*8 + 2] -> Blue color
@@ -70,8 +69,34 @@ function GetACroppedRegionOfTheScreenColorAndOfTheSimulation(/*x: number, y: num
   // data[(pixel_y*7+pixel_x)*8 + 4] -> State (255 -> Alive | 0 -> Dead)
   // data[(pixel_y*7+pixel_x)*8 + 5] -> A timestamp
   // data[(pixel_y*7+pixel_x)*8 + 6] -> Is Zombie (255 -> Yes | 0 -> No)
-  // data[(pixel_y*7+pixel_x)*8 + 7] -> Padding for the memory
-  const data = new Uint8Array(7 * 7 * (4 + 4)); // 64 pixels with their RGBA color and simulation state.
+  // data[(pixel_y*7+pixel_x)*8 + 7] -> Visibility (255 -> Yes | 0 -> No)
+  let pixel_state = simulation.GetCPUTexture();
+  os.canvas_texture_webgl = renderer.properties.get(os.canvas_texture).__webglTexture;
+  if (os.canvas_texture_webgl !== undefined) {
+    gl.bindFramebuffer(gl.FRAMEBUFFER, os.framebuffer_to_read_the_CPU_texture);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, os.canvas_texture_webgl, 0);
+    if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) == gl.FRAMEBUFFER_COMPLETE) {
+      gl.readPixels(0, 0, os.width, os.height, gl.RGBA, gl.UNSIGNED_BYTE, os.canvas_texture_cpu);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, null, 0);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    }
+  }
+
+  const data = new Uint8Array(w * h * (4 + 4));
+  for (let i=0; i<w; i++) {
+    for (let j=0; j<h; j++) {
+      const pixel_x = x+i;
+      const pixel_y = y+j;
+      data[(j*w+i)*8 + 0] = os.canvas_texture_cpu[(pixel_y*w+pixel_x)*4 + 0];
+      data[(j*w+i)*8 + 1] = os.canvas_texture_cpu[(pixel_y*w+pixel_x)*4 + 1];
+      data[(j*w+i)*8 + 2] = os.canvas_texture_cpu[(pixel_y*w+pixel_x)*4 + 2];
+      data[(j*w+i)*8 + 3] = os.canvas_texture_cpu[(pixel_y*w+pixel_x)*4 + 3];
+      data[(j*w+i)*8 + 4] = pixel_state[(pixel_y*w+pixel_x)*4 + 0];
+      data[(j*w+i)*8 + 5] = pixel_state[(pixel_y*w+pixel_x)*4 + 1];
+      data[(j*w+i)*8 + 6] = pixel_state[(pixel_y*w+pixel_x)*4 + 2];
+      data[(j*w+i)*8 + 7] = pixel_state[(pixel_y*w+pixel_x)*4 + 3];
+    }
+  }
   return data;
 }
 
@@ -313,6 +338,8 @@ function renderLoop(timestamp: number) {
   renderer.autoClear = false;
   renderer.clear();
   renderer.render(scene, camera);
+
+  GetACroppedRegionOfTheScreenColorAndOfTheSimulation(0, 0, 7, 7);
 
   previous_timestamp = timestamp;
 }
