@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { Magnifier } from "./magnifier";
 import { Simulation } from "./simulation";
 import { Os } from "./os";
+import { SquaredNorm } from "./utils";
 
 function CreateRenderer() {
   let canvas = document.createElement("canvas");
@@ -214,9 +215,12 @@ for (const retry_button of document.getElementsByClassName("RetryButton")) {
 
 // Events
 const mouse_position = new THREE.Vector2(0, 0);
+const last_sim_press_screen = new THREE.Vector2(-1, -1);
 document.addEventListener("mousedown", (event: MouseEvent) => {
   mouse_position.x = event.clientX;
   mouse_position.y = event.clientY;
+  last_sim_press_screen.x = -1;
+  last_sim_press_screen.y = -1;
   if (!success_overlay.hidden || !game_over_overlay.hidden) return;
   if (
     os.MagnifierSettingIsOn() &&
@@ -250,9 +254,12 @@ document.addEventListener("mousedown", (event: MouseEvent) => {
       os.IsMouseOverTabletScreen(event.clientX, event.clientY) &&
       !os.IsXorcizing()
     ) {
-      const x = os.GetMouseXInTabletScreenSpace(event.clientX);
-      const y = os.GetMouseYInTabletScreenSpace(event.clientY);
-      simulation.PressScreen(x, y);
+      simulation.PressScreen(
+        os.GetMouseXInTabletScreenSpace(event.clientX),
+        os.GetMouseYInTabletScreenSpace(event.clientY)
+      );
+      last_sim_press_screen.x = event.clientX;
+      last_sim_press_screen.y = event.clientY;
     }
   }
 });
@@ -279,11 +286,50 @@ document.addEventListener("mousemove", (event: MouseEvent) => {
     os.IsMouseOverTabletScreen(event.clientX, event.clientY) &&
     !os.IsXorcizing()
   ) {
-    const x = os.GetMouseXInTabletScreenSpace(event.clientX);
-    const y = os.GetMouseYInTabletScreenSpace(event.clientY);
-    simulation.PressScreen(x, y);
-    // TODO: Also call PressScreen() on all pixels from last PressScreen()
-    //       position in a line if not interrupted
+    const x = event.clientX;
+    const y = event.clientY;
+    let from_x = last_sim_press_screen.x;
+    let from_y = last_sim_press_screen.y;
+    const x_diff = from_x === x ? 0 : from_x < x ? 1 : -1;
+    const y_diff = from_y === y ? 0 : from_y < y ? 1 : -1;
+    let num_steps = 0;
+    while (from_x != x || from_y != y) {
+      const top_x = from_x;
+      const top_y = from_y + y_diff;
+      const right_x = from_x + x_diff;
+      const right_y = from_y;
+      const top_right_x = from_x + x_diff * 0.6;
+      const top_right_y = from_y + y_diff * 0.6;
+      const top_dist = SquaredNorm(top_x - x, top_y - y);
+      const right_dist = SquaredNorm(right_x - x, right_y - y);
+      const top_right_dist = SquaredNorm(top_right_x - x, top_right_y - y);
+      if (top_dist < right_dist && top_dist < top_right_dist) {
+        // top is closer
+        from_y += y_diff;
+      } else if (right_dist < top_dist && right_dist < top_right_dist) {
+        // right is closer
+        from_x += x_diff;
+      } else {
+        // top right is closer
+        from_x += x_diff;
+        from_y += y_diff;
+      }
+      simulation.PressScreen(
+        os.GetMouseXInTabletScreenSpace(from_x),
+        os.GetMouseYInTabletScreenSpace(from_y)
+      );
+      ++num_steps;
+      if (num_steps > 300) break;
+    }
+    last_sim_press_screen.x = x;
+    last_sim_press_screen.y = y;
+    simulation.PressScreen(
+      os.GetMouseXInTabletScreenSpace(x),
+      os.GetMouseYInTabletScreenSpace(y)
+    );
+  } else {
+    last_sim_press_screen.x = -1;
+    last_sim_press_screen.y = -1;
   }
   arm_release.position.x =
     event.clientX - 350 - window.innerWidth / 2 + 960 / 2;
