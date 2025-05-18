@@ -76,7 +76,7 @@ let tablette_shader = new THREE.ShaderMaterial({
     } else {
       gl_FragColor = screen;
     }
-  }`
+  }`,
 });
 let tablette = new THREE.Mesh(
   new THREE.PlaneGeometry(width, height, 1),
@@ -289,12 +289,15 @@ function renderLoop(timestamp: number) {
   document.getElementById("Fps")!.textContent =
     average_duration.toString() + " s";
 
-  simulation.Simulate(2/255);
+  simulation.Simulate(2 / 255);
 
   if (simulation.AreAllPixelsAlive()) {
     success_overlay.hidden = false;
-  } else if (simulation.AreMostPixelsDead()) {
-    game_over_overlay.hidden = true;
+  } else {
+    success_overlay.hidden = true; // TODO: Should not be necessary
+    if (simulation.AreMostPixelsDead()) {
+      game_over_overlay.hidden = true;
+    }
   }
 
   renderer.autoClear = false;
