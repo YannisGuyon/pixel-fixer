@@ -108,13 +108,17 @@ function GetACroppedRegionOfTheScreenColorAndOfTheSimulation(x: number, y: numbe
 
 let tablette_shader = new THREE.ShaderMaterial({
   uniforms: {
+    darkmode: { value: 0 },
     canvas: { value: os.canvas_texture },
     simulation: { value: simulation.GetTexture() },
   },
   vertexShader: `varying vec2 vUv; void main() {gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); vUv = uv;}`,
-  fragmentShader: `varying vec2 vUv; uniform sampler2D canvas; uniform sampler2D simulation; void main() {
+  fragmentShader: `varying vec2 vUv; uniform sampler2D canvas; uniform sampler2D simulation; uniform int darkmode; void main() {
     ivec4 pixel = ivec4(texture2D(simulation, vUv)*255.0);
     vec4 screen = texture2D(canvas, vUv);
+    if (darkmode == 1) {
+      screen.rgb = vec3(1.0)-screen.rgb;
+    }
     if (pixel.b == 255) {
       gl_FragColor = mix(vec4(0.3, 0.7, 0.2, 1.0), screen, 0.1);
     } else if (pixel.r == 0) {
@@ -325,6 +329,7 @@ function renderLoop(timestamp: number) {
   const duration = average_duration; // Can also be hardcoded to 0.016.
 
   os.Update(duration, arm_magnifier.visible);
+  tablette_shader.uniforms.darkmode.value = os.toggles[0].on;
 
   the_magnifier.visible = os.MagnifierSettingIsOn() && !arm_magnifier.visible;
 
@@ -368,8 +373,6 @@ function renderLoop(timestamp: number) {
   renderer.autoClear = false;
   renderer.clear();
   renderer.render(scene, camera);
-
-  GetACroppedRegionOfTheScreenColorAndOfTheSimulation(0, 0, 7, 7);
 
   previous_timestamp = timestamp;
 }
