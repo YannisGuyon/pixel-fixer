@@ -115,9 +115,8 @@ export class Simulation {
           zombie_count += data20.b==255?1:0;
           zombie_count += data21.b==255?1:0;
           zombie_count += data22.b==255?1:0;
-          int die = data11.g-zombie_count;
-          if (die <= 0) {
-            data11.r = 254;
+          if (zombie_count > 0) {
+            data11.r = 0;
             data11.g = 255;
           } else {
             data11.g -= zombie_count;
@@ -146,7 +145,7 @@ export class Simulation {
       void main() {
         ivec4 pixel = ivec4(texture(simulation, vUv)*255.0);
         if (length(vUv*vec2(simulation_screen_ratio, 1.0)-position_click*vec2(simulation_screen_ratio, 1.0))<0.02) {
-          pixel = ivec4(0, 255, 0, 255); // Dead
+          pixel = ivec4(254, 255, 0, 255); // Dead
         }
         out_color = vec4(pixel)/255.0;
       }
