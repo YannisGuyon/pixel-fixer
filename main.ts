@@ -346,8 +346,8 @@ function renderLoop(timestamp: number) {
   magnifier_fisheye.SetVisible(os.MagnifierSettingIsOn());
   magnifier_fisheye_tablet.SetVisible(os.MagnifierSettingIsOn());
 
-  document.getElementById("Fps")!.textContent =
-    average_duration.toString() + " s";
+  // document.getElementById("Fps")!.textContent =
+  //   average_duration.toString() + " s";
 
   const infection_propagation_speed =
     simulation.GetNumDeadPixels() < 6
