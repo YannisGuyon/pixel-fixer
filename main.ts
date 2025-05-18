@@ -48,7 +48,7 @@ scene.add(camera);
 
 const loader = new THREE.TextureLoader();
 const table = new THREE.Mesh(
-  new THREE.PlaneGeometry(4032 * 0.5, 3024 * 0.5, 1, 1),
+  new THREE.PlaneGeometry(2016, 1512, 1, 1),
   new THREE.MeshStandardMaterial({
     map: loader.load("resources/texture/bureau.webp"),
   })
@@ -126,12 +126,7 @@ const magnifier = new Magnifier(scene);
 // Sounds
 let first_interaction = false;
 const sound_track = document.getElementById("SoundTrack")! as HTMLMediaElement;
-const sound_taps = [
-  document.getElementById("SoundTap1")! as HTMLMediaElement,
-  document.getElementById("SoundTap2")! as HTMLMediaElement,
-  document.getElementById("SoundTap3")! as HTMLMediaElement,
-  document.getElementById("SoundTap4")! as HTMLMediaElement,
-];
+const sound_taps = [document.getElementById("SoundTap")! as HTMLMediaElement];
 
 // Overlays
 const game_over_overlay = document.getElementById(
