@@ -218,9 +218,12 @@ for (const retry_button of document.getElementsByClassName("RetryButton")) {
 
 // Events
 const mouse_position = new THREE.Vector2(0, 0);
+const last_sim_press_screen = new THREE.Vector2(-1, -1);
 document.addEventListener("mousedown", (event: MouseEvent) => {
   mouse_position.x = event.clientX;
   mouse_position.y = event.clientY;
+  last_sim_press_screen.x = -1;
+  last_sim_press_screen.y = -1;
   if (!success_overlay.hidden || !game_over_overlay.hidden) return;
   if (
     os.MagnifierSettingIsOn() &&
@@ -254,9 +257,12 @@ document.addEventListener("mousedown", (event: MouseEvent) => {
       os.IsMouseOverTabletScreen(event.clientX, event.clientY) &&
       !os.IsXorcizing()
     ) {
-      const x = os.GetMouseXInTabletScreenSpace(event.clientX);
-      const y = os.GetMouseYInTabletScreenSpace(event.clientY);
-      simulation.PressScreen(x, y);
+      simulation.PressScreen(
+        os.GetMouseXInTabletScreenSpace(event.clientX),
+        os.GetMouseYInTabletScreenSpace(event.clientY)
+      );
+      last_sim_press_screen.x = event.clientX;
+      last_sim_press_screen.y = event.clientY;
     }
   }
 });
@@ -283,11 +289,35 @@ document.addEventListener("mousemove", (event: MouseEvent) => {
     os.IsMouseOverTabletScreen(event.clientX, event.clientY) &&
     !os.IsXorcizing()
   ) {
-    const x = os.GetMouseXInTabletScreenSpace(event.clientX);
-    const y = os.GetMouseYInTabletScreenSpace(event.clientY);
-    simulation.PressScreen(x, y);
-    // TODO: Also call PressScreen() on all pixels from last PressScreen()
-    //       position in a line if not interrupted
+    const x = event.clientX;
+    const y = event.clientY;
+    let from_x = last_sim_press_screen.x;
+    let from_y = last_sim_press_screen.y;
+    let x_diff = x - from_x;
+    let y_diff = y - from_y;
+    const max_num_pixels = Math.min(
+      100,
+      Math.max(Math.abs(x_diff), Math.abs(y_diff))
+    );
+    x_diff /= max_num_pixels;
+    y_diff /= max_num_pixels;
+    for (let i = 2; i < max_num_pixels; ++i) {
+      from_x += x_diff;
+      from_y += y_diff;
+      simulation.PressScreen(
+        os.GetMouseXInTabletScreenSpace(Math.round(from_x)),
+        os.GetMouseYInTabletScreenSpace(Math.round(from_y))
+      );
+    }
+    last_sim_press_screen.x = x;
+    last_sim_press_screen.y = y;
+    simulation.PressScreen(
+      os.GetMouseXInTabletScreenSpace(x),
+      os.GetMouseYInTabletScreenSpace(y)
+    );
+  } else {
+    last_sim_press_screen.x = -1;
+    last_sim_press_screen.y = -1;
   }
   arm_release.position.x =
     event.clientX - 350 - window.innerWidth / 2 + 960 / 2;
@@ -297,10 +327,13 @@ document.addEventListener("mousemove", (event: MouseEvent) => {
   arm_press.position.y = arm_release.position.y;
   arm_magnifier.position.x = arm_release.position.x + 80;
   arm_magnifier.position.y = arm_release.position.y + 100;
-  magnifier.SetPosition(
-    event.clientX - window.innerWidth / 2,
-    -event.clientY + window.innerHeight / 2
-  );
+  if(arm_magnifier.visible){
+    magnifier.SetPixels(GetACroppedRegionOfTheScreenColorAndOfTheSimulation(os.GetMouseXInTabletScreenSpaceInteger(mouse_position.x), os.GetMouseYInTabletScreenSpaceInteger(mouse_position.y), magnifier.pixel_count, magnifier.pixel_count));
+    magnifier.SetPosition(
+      event.clientX - window.innerWidth / 2,
+      -event.clientY + window.innerHeight / 2
+    );
+    }
 });
 
 window.addEventListener("resize", onWindowResize);
