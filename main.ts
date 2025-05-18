@@ -173,6 +173,8 @@ document.addEventListener("mousedown", (event: MouseEvent) => {
   ) {
     arm_magnifier.visible = !arm_magnifier.visible;
     magnifier.SetVisible(arm_magnifier.visible);
+    
+    arm_magnifier.visible ? magnifier.Grab() : magnifier.Release();
   }
   if (arm_magnifier.visible) {
     arm_release.visible = false;
@@ -205,11 +207,9 @@ document.addEventListener("mouseup", (event: MouseEvent) => {
   if (arm_magnifier.visible) {
     arm_release.visible = false;
     arm_press.visible = false;
-    magnifier.Release();
   } else {
     arm_release.visible = true;
     arm_press.visible = false;
-    magnifier.Grab();
   }
   os.SetMouseReleased(event.clientX, event.clientY);
 });
@@ -272,7 +272,6 @@ function renderLoop(timestamp: number) {
 
   if (magnifier.is_enabled !== os.MagnifierSettingIsOn()) {
     magnifier.is_enabled = os.MagnifierSettingIsOn();
-    magnifier.Release();
   }
   magnifier.Update(duration);
   // tablette.material.map!.needsUpdate = true;
