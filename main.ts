@@ -76,7 +76,7 @@ let tablette_shader = new THREE.ShaderMaterial({
     } else {
       gl_FragColor = screen;
     }
-  }`
+  }`,
 });
 let tablette = new THREE.Mesh(
   new THREE.PlaneGeometry(width, height, 1),
@@ -141,6 +141,7 @@ scene.add(the_magnifier);
 the_magnifier.visible = false;
 
 const magnifier = new Magnifier(scene);
+magnifier.SetVisible(false);
 
 // Sounds
 let first_interaction = false;
@@ -171,6 +172,7 @@ document.addEventListener("mousedown", (event: MouseEvent) => {
     event.clientY < window.innerHeight / 2 + 300
   ) {
     arm_magnifier.visible = !arm_magnifier.visible;
+    magnifier.SetVisible(arm_magnifier.visible);
   }
   if (arm_magnifier.visible) {
     arm_release.visible = false;
@@ -203,9 +205,11 @@ document.addEventListener("mouseup", (event: MouseEvent) => {
   if (arm_magnifier.visible) {
     arm_release.visible = false;
     arm_press.visible = false;
+    magnifier.Release();
   } else {
     arm_release.visible = true;
     arm_press.visible = false;
+    magnifier.Grab();
   }
   os.SetMouseReleased(event.clientX, event.clientY);
 });
@@ -235,19 +239,6 @@ document.addEventListener("mousemove", (event: MouseEvent) => {
     event.clientX - window.innerWidth / 2,
     -event.clientY + window.innerHeight / 2
   );
-});
-
-document.addEventListener("keydown", (event: KeyboardEvent) => {
-  if (!success_overlay.hidden || !game_over_overlay.hidden) return;
-  if (event.code === "ShiftLeft") {
-    magnifier.Grab();
-  }
-});
-document.addEventListener("keyup", (event: KeyboardEvent) => {
-  if (!success_overlay.hidden || !game_over_overlay.hidden) return;
-  if (event.code === "ShiftLeft") {
-    magnifier.Release();
-  }
 });
 
 window.addEventListener("resize", onWindowResize);
@@ -289,12 +280,15 @@ function renderLoop(timestamp: number) {
   document.getElementById("Fps")!.textContent =
     average_duration.toString() + " s";
 
-  simulation.Simulate(2/255);
+  simulation.Simulate(2 / 255);
 
   if (simulation.AreAllPixelsAlive()) {
     success_overlay.hidden = false;
-  } else if (simulation.AreMostPixelsDead()) {
-    game_over_overlay.hidden = true;
+  } else {
+    success_overlay.hidden = true; // TODO: Should not be necessary
+    if (simulation.AreMostPixelsDead()) {
+      game_over_overlay.hidden = true;
+    }
   }
 
   renderer.autoClear = false;

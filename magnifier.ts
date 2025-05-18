@@ -419,4 +419,11 @@ export class Magnifier {
     this.is_grabbed = false;
     this.SetPosition(this.initial_position_x, this.initial_position_y);
   }
+  SetVisible(visible:boolean){
+    for (let x=0; x<this.pixel_count; x++) {
+      for (let y=0; y<this.pixel_count; y++) {
+        this.pixels[x][y].visible = visible;
+      }
+    }
+  }
 }
