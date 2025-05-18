@@ -291,23 +291,25 @@ document.addEventListener("mousemove", (event: MouseEvent) => {
   ) {
     const x = event.clientX;
     const y = event.clientY;
-    let from_x = last_sim_press_screen.x;
-    let from_y = last_sim_press_screen.y;
-    let x_diff = x - from_x;
-    let y_diff = y - from_y;
-    const max_num_pixels = Math.min(
-      100,
-      Math.max(Math.abs(x_diff), Math.abs(y_diff))
-    );
-    x_diff /= max_num_pixels;
-    y_diff /= max_num_pixels;
-    for (let i = 2; i < max_num_pixels; ++i) {
-      from_x += x_diff;
-      from_y += y_diff;
-      simulation.PressScreen(
-        os.GetMouseXInTabletScreenSpace(Math.round(from_x)),
-        os.GetMouseYInTabletScreenSpace(Math.round(from_y))
+    if (last_sim_press_screen.x !== -1 && last_sim_press_screen.y !== -1) {
+      let from_x = last_sim_press_screen.x;
+      let from_y = last_sim_press_screen.y;
+      let x_diff = x - from_x;
+      let y_diff = y - from_y;
+      const max_num_pixels = Math.min(
+        100,
+        Math.max(Math.abs(x_diff), Math.abs(y_diff))
       );
+      x_diff /= max_num_pixels;
+      y_diff /= max_num_pixels;
+      for (let i = 2; i < max_num_pixels; ++i) {
+        from_x += x_diff;
+        from_y += y_diff;
+        simulation.PressScreen(
+          os.GetMouseXInTabletScreenSpace(Math.round(from_x)),
+          os.GetMouseYInTabletScreenSpace(Math.round(from_y))
+        );
+      }
     }
     last_sim_press_screen.x = x;
     last_sim_press_screen.y = y;
@@ -327,13 +329,20 @@ document.addEventListener("mousemove", (event: MouseEvent) => {
   arm_press.position.y = arm_release.position.y;
   arm_magnifier.position.x = arm_release.position.x + 80;
   arm_magnifier.position.y = arm_release.position.y + 100;
-  if(arm_magnifier.visible){
-    magnifier.SetPixels(GetACroppedRegionOfTheScreenColorAndOfTheSimulation(os.GetMouseXInTabletScreenSpaceInteger(mouse_position.x), os.GetMouseYInTabletScreenSpaceInteger(mouse_position.y), magnifier.pixel_count, magnifier.pixel_count));
+  if (arm_magnifier.visible) {
+    magnifier.SetPixels(
+      GetACroppedRegionOfTheScreenColorAndOfTheSimulation(
+        os.GetMouseXInTabletScreenSpaceInteger(mouse_position.x),
+        os.GetMouseYInTabletScreenSpaceInteger(mouse_position.y),
+        magnifier.pixel_count,
+        magnifier.pixel_count
+      )
+    );
     magnifier.SetPosition(
       event.clientX - window.innerWidth / 2,
       -event.clientY + window.innerHeight / 2
     );
-    }
+  }
 });
 
 window.addEventListener("resize", onWindowResize);

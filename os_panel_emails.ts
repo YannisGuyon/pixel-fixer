@@ -47,6 +47,7 @@ export class OsPanelEmails extends OsPanel {
         this.page = 1;
       }
       if (
+        !this.show_email_details &&
         mouse_x >= this.final_position.x + 15 &&
         mouse_x < this.final_position.x + this.texture.image.width - 15 &&
         mouse_y >= this.final_position.y + 45 + this.page * 80 &&
