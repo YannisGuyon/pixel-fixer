@@ -66,8 +66,17 @@ let tablette_shader = new THREE.ShaderMaterial({
     simulation: { value: simulation.GetTexture() },
   },
   vertexShader: `varying vec2 vUv; void main() {gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); vUv = uv;}`,
-  fragmentShader: `varying vec2 vUv; uniform sampler2D canvas; uniform sampler2D simulation; void main() {gl_FragColor = mix(texture2D(simulation, vUv), texture2D(canvas, vUv), 0.5);}`,
-  transparent: true,
+  fragmentShader: `varying vec2 vUv; uniform sampler2D canvas; uniform sampler2D simulation; void main() {
+    ivec4 pixel = ivec4(texture2D(simulation, vUv)*255.0);
+    vec4 screen = texture2D(canvas, vUv);
+    if (pixel.b == 255) {
+      gl_FragColor = mix(vec4(0.3, 0.7, 0.2, 1.0), screen, 0.1);
+    } else if (pixel.r == 0) {
+      gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+    } else {
+      gl_FragColor = screen;
+    }
+  }`,
 });
 let tablette = new THREE.Mesh(
   new THREE.PlaneGeometry(width, height, 1),
@@ -271,12 +280,15 @@ function renderLoop(timestamp: number) {
   document.getElementById("Fps")!.textContent =
     average_duration.toString() + " s";
 
-  simulation.Simulate();
+  simulation.Simulate(2 / 255);
 
   if (simulation.AreAllPixelsAlive()) {
     success_overlay.hidden = false;
-  } else if (simulation.AreMostPixelsDead()) {
-    game_over_overlay.hidden = true;
+  } else {
+    success_overlay.hidden = true; // TODO: Should not be necessary
+    if (simulation.AreMostPixelsDead()) {
+      game_over_overlay.hidden = true;
+    }
   }
 
   renderer.autoClear = false;
