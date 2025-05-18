@@ -250,10 +250,13 @@ document.addEventListener("mousemove", (event: MouseEvent) => {
   arm_press.position.y = arm_release.position.y;
   arm_magnifier.position.x = arm_release.position.x + 80;
   arm_magnifier.position.y = arm_release.position.y + 100;
-  magnifier.SetPosition(
-    event.clientX - window.innerWidth / 2,
-    -event.clientY + window.innerHeight / 2
-  );
+  if(arm_magnifier.visible){
+    magnifier.SetPosition(
+      event.clientX - window.innerWidth / 2,
+      -event.clientY + window.innerHeight / 2
+    );
+    magnifier.SetPixels(GetACroppedRegionOfTheScreenColorAndOfTheSimulation());
+  }
 });
 
 window.addEventListener("resize", onWindowResize);

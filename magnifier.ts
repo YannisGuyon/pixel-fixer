@@ -9,6 +9,7 @@ export enum pixelState {
 function VertexShaderPixel() {
   return `
     in vec2 uid;
+    in vec3 color;
     uniform float time;
     float rand(vec2 co){
       return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
@@ -20,6 +21,7 @@ function VertexShaderPixel() {
       gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
       vUv = uv;
       vUid = uid;
+      vColor = color;
       position_2d = gl_Position.xy;
     }
   `;
@@ -32,6 +34,7 @@ function FragmentShaderDeadPixel() {
     uniform float screen_ratio;
     varying vec2 vUv;
     varying vec2 vUid;
+    varying vec3 vColor;
     varying vec2 position_2d;
     float rand(vec2 co){
       return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
@@ -91,7 +94,7 @@ function FragmentShaderDeadPixel() {
       if (distance_from_center>0.50) {
         discard;
       }
-      vec3 color = vec3(0.8, 0.4, 1.0);
+      vec3 color = vColor;
       if (vUv.x<0.05 || vUv.x>0.95 || vUv.y<0.05 || vUv.y>0.95) {
         gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
       } else {
@@ -113,6 +116,7 @@ function FragmentShaderAlivePixel() {
     uniform float screen_ratio;
     varying vec2 vUv;
     varying vec2 vUid;
+    varying vec3 vColor;
     varying vec2 position_2d;
     float rand(vec2 co){
       return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
@@ -178,7 +182,7 @@ function FragmentShaderAlivePixel() {
       if (distance_from_center>0.50) {
         discard;
       }
-      vec3 color = vec3(0.8, 0.4, 1.0);
+      vec3 color = vColor;
       if (vUv.x<0.05 || vUv.x>0.95 || vUv.y<0.05 || vUv.y>0.95) {
         gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
       } else {
@@ -199,6 +203,7 @@ function FragmentShaderZombiePixel() {
     uniform float screen_ratio;
     varying vec2 vUv;
     varying vec2 vUid;
+    varying vec3 vColor;
     varying vec2 position_2d;
     float rand(vec2 co){
       return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
@@ -278,7 +283,7 @@ function FragmentShaderZombiePixel() {
       if (distance_from_center>0.50) {
         discard;
       }
-      vec3 color = vec3(0.8, 0.4, 1.0);
+      vec3 color = vColor;
       if (vUv.x<0.05 || vUv.x>0.95 || vUv.y<0.05 || vUv.y>0.95) {
         gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
       } else {
@@ -297,9 +302,9 @@ export class Magnifier {
   private magnifier_zombie_material: THREE.ShaderMaterial;
   private magnifier_alive_material: THREE.ShaderMaterial;
   private magnifier_dead_material: THREE.ShaderMaterial;
+  private pixelsContent: Uint8Array;
   private pixels: THREE.Mesh[][];
   private pixel_size: number;
-  private pixel_state_grid: pixelState[][];
   private pixel_count: number;
   private is_grabbed: boolean;
   public is_enabled: boolean;
@@ -310,9 +315,9 @@ export class Magnifier {
   public constructor(scene: THREE.Scene) {
     this.scene = scene;
     this.pixels = [];
-    this.pixel_state_grid = [[pixelState.dead, pixelState.dead, pixelState.dead],[pixelState.dead, pixelState.dead, pixelState.alive], [pixelState.alive, pixelState.zombie, pixelState.alive]];
+    this.pixel_count = 7;
+    this.pixelsContent = new Uint8Array(this.pixel_count * this.pixel_count * (4 + 4));
     this.pixel_size = 90;
-    this.pixel_count = 3;
     this.initial_position_x = 500;
     this.initial_position_y = 0;
     this.current_mouse_position_x = 0;
@@ -354,17 +359,26 @@ export class Magnifier {
       for (let y=0; y<this.pixel_count; y++) {
         this.pixels[x][y] = new THREE.Mesh(
           new THREE.PlaneGeometry(this.pixel_size, this.pixel_size, 1, 1),
-          this.mapPixelStateToShaderMaterial(this.pixel_state_grid[x][y])
+          this.magnifier_alive_material
         );
         this.pixels[x][y].geometry.setAttribute('uid', new THREE.Uint8BufferAttribute([x,y,x,y, x,y,x,y], 2));
+        this.pixels[x][y].geometry.setAttribute('color', new THREE.Uint8BufferAttribute([0,0,0,0,0,0,0,0,0,0,0,0],3));
         this.pixels[x][y].position.x = 10000+x*this.pixel_size-this.pixel_size*Math.floor(this.pixel_count*0.5);
         this.pixels[x][y].position.y = 10000+y*this.pixel_size-this.pixel_size*Math.floor(this.pixel_count*0.5);
         this.pixels[x][y].position.z = -8;
+        this.pixels[x][y].visible = false;
         this.scene.add(this.pixels[x][y]);
       }
     }
   }
-  mapPixelStateToShaderMaterial(state: pixelState):THREE.ShaderMaterial{
+  mapPixelStateToShaderMaterial(deadOrAlive: number, isZombie: number):THREE.ShaderMaterial{
+    let state:pixelState;
+    if(isZombie === 255)
+      state = pixelState.zombie;
+    else if(deadOrAlive === 255)
+      state = pixelState.alive;
+    else state = pixelState.dead;
+
     switch(state){
       case pixelState.alive:
         return this.magnifier_alive_material;
@@ -374,7 +388,7 @@ export class Magnifier {
         return this.magnifier_zombie_material;
     }
   }
-  Update(time: number) {
+  Update(time: number, pixelGrid?: pixelState[]) {
     this.magnifier_zombie_material.uniforms.time.value = 0.5+time*0.0001;
     this.magnifier_zombie_material.uniforms.screen_ratio.value = window.innerWidth/window.innerHeight;
     this.magnifier_dead_material.uniforms.time.value = 0.5+time*0.0001;
@@ -388,9 +402,23 @@ export class Magnifier {
         this.pixels[x][y].scale.y = Math.sin(Date.now()*0.01+(x*y)+x)*0.2+0.8;
       }
     }
-
-    if(this.is_grabbed){
-      this.SetPosition(this.current_mouse_position_x, this.current_mouse_position_y);
+  }
+  SetPixels(pixelsContent: Uint8Array){
+    for (let x=0; x<this.pixel_count; x++) {
+      this.pixels[x] = [];
+      for (let y=0; y<this.pixel_count; y++) {
+        this.pixels[x][y].material = this.mapPixelStateToShaderMaterial(pixelsContent[(x*this.pixel_count+y)*8+4], pixelsContent[(x*this.pixel_count+y)*8+6]);
+        this.pixels[x][y].geometry.setAttribute('uid', new THREE.Uint8BufferAttribute([x,y,x,y, x,y,x,y], 2));
+        let r = pixelsContent[(x*this.pixel_count+y)*8];
+        let g = pixelsContent[(x*this.pixel_count+y)*8 + 1];
+        let b = pixelsContent[(x*this.pixel_count+y)*8 + 2];
+        this.pixels[x][y].geometry.setAttribute('color', new THREE.Uint8BufferAttribute([r,g,b,r,g,b,r,g,b,r,g,b], 3));
+        this.pixels[x][y].position.x = 10000+x*this.pixel_size-this.pixel_size*Math.floor(this.pixel_count*0.5);
+        this.pixels[x][y].position.y = 10000+y*this.pixel_size-this.pixel_size*Math.floor(this.pixel_count*0.5);
+        this.pixels[x][y].position.z = -8;
+        this.pixels[x][y].visible = pixelsContent[(x*this.pixel_count+y)*8 + 7] === 255;
+        this.scene.add(this.pixels[x][y]);
+      }
     }
   }
   SetPosition(center_x: number, center_y:number) {
