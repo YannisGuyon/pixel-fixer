@@ -19,6 +19,7 @@ export class Simulation {
   private program_simulate: WebGLProgram;
   private program_kill_pixels: WebGLProgram;
   private program_heal_pixels: WebGLProgram;
+  private program_darkmode: WebGLProgram;
   private framebuffer: WebGLFramebuffer;
   private texture_input: WebGLTexture;
   private texture_framebuffer: WebGLTexture;
@@ -49,7 +50,12 @@ export class Simulation {
         data[i*4+2] = 0;
         data[i*4+3] = 255;
       }
-      data[(50*this.texture_width+320)*4] = 0;
+      const starting_dead_pixel_x = 590;
+      const starting_dead_pixel_y = 402;
+      data[(starting_dead_pixel_y*this.texture_width+starting_dead_pixel_x)*4] = 0;
+      data[(starting_dead_pixel_y*this.texture_width+starting_dead_pixel_x+1)*4] = 0;
+      data[((starting_dead_pixel_y+1)*this.texture_width+starting_dead_pixel_x)*4] = 0;
+      data[((starting_dead_pixel_y+1)*this.texture_width+starting_dead_pixel_x+1)*4] = 0;
       this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture_input);
       this.gl.texImage2D(this.gl.TEXTURE_2D, level, internalFormat,
         this.texture_width, this.texture_height, border, format, type, data);
@@ -176,10 +182,20 @@ export class Simulation {
       }
     `;
 
+    const fragment_shader_darkmode_source = `#version 300 es
+      precision highp float;
+      in vec2 vUv;
+      out vec4 out_color;
+      void main() {
+        out_color = vec4(0.0, 1.0, 0.0, 1.0);
+      }
+    `;
+
     const vertex_shader = loadShader(this.gl, this.gl.VERTEX_SHADER, vertex_shader_source);
     const fragment_shader_simulate = loadShader(this.gl, this.gl.FRAGMENT_SHADER, fragment_shader_simulation_source);
     const fragment_shader_kill_pixels = loadShader(this.gl, this.gl.FRAGMENT_SHADER, fragment_shader_kill_pixels_source);
     const fragment_shader_heal_pixels = loadShader(this.gl, this.gl.FRAGMENT_SHADER, fragment_shader_heal_pixels_source);
+    const fragment_shader_darkmode = loadShader(this.gl, this.gl.FRAGMENT_SHADER, fragment_shader_darkmode_source);
 
     this.program_simulate = this.gl.createProgram();
     this.gl.attachShader(this.program_simulate, vertex_shader!);
@@ -195,6 +211,11 @@ export class Simulation {
     this.gl.attachShader(this.program_heal_pixels, vertex_shader!);
     this.gl.attachShader(this.program_heal_pixels, fragment_shader_heal_pixels!);
     this.gl.linkProgram(this.program_heal_pixels);
+
+    this.program_darkmode = this.gl.createProgram();
+    this.gl.attachShader(this.program_darkmode, vertex_shader!);
+    this.gl.attachShader(this.program_darkmode, fragment_shader_darkmode!);
+    this.gl.linkProgram(this.program_darkmode);
 
     const forceTextureInitialization = function() {
       const material = new THREE.MeshBasicMaterial();
@@ -246,7 +267,7 @@ export class Simulation {
     for (let i = 0; i < this.num_pixels; ++i) {
       if (this.retrieved_buffer[i * 4] === 255) ++this.num_alive_pixels;
     }
-	}
+  }
 
   PressScreen(x:number, y:number) {
     const viewport = this.gl.getParameter(this.gl.VIEWPORT);
@@ -280,23 +301,53 @@ export class Simulation {
     this.gl.uniform1f(this.gl.getUniformLocation(this.program_heal_pixels, "simulation_screen_ratio"), this.texture_width/this.texture_height);
     this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
     this.gl.copyTexImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA8, 0, 0, this.texture_width, this.texture_height, 0);
+    this.gl.readPixels(0, 0, this.texture_width, this.texture_height, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.retrieved_buffer);
     this.gl.bindTexture(this.gl.TEXTURE_2D, binded_texture);
     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, binded_framebuffer);
     this.gl.viewport(viewport[0], viewport[1], viewport[2], viewport[3]);
-    let is_pixel_healed = 1;
-    return is_pixel_healed;  // TODO
+
+    const previous_num_alive_pixels = this.num_alive_pixels;
+    this.num_alive_pixels = 0;
+    for (let i = 0; i < this.num_pixels; ++i) {
+      if (this.retrieved_buffer[i * 4] === 255) ++this.num_alive_pixels;
+    }
+    return this.num_alive_pixels-previous_num_alive_pixels;
+  }
+
+  InstantlyKillMostPixels() {
+    const viewport = this.gl.getParameter(this.gl.VIEWPORT);
+    const binded_framebuffer = this.gl.getParameter(this.gl.FRAMEBUFFER_BINDING);
+    const binded_texture = this.gl.getParameter(this.gl.TEXTURE_BINDING_2D);
+    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.framebuffer);
+    this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture_input);
+    this.gl.activeTexture(this.gl.TEXTURE0);
+    this.gl.viewport(0, 0, this.texture_width, this.texture_height);
+    this.gl.useProgram(this.program_darkmode);
+    this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+    this.gl.copyTexImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA8, 0, 0, this.texture_width, this.texture_height, 0);
+    this.gl.readPixels(0, 0, this.texture_width, this.texture_height, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.retrieved_buffer);
+    this.gl.bindTexture(this.gl.TEXTURE_2D, binded_texture);
+    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, binded_framebuffer);
+    this.gl.viewport(viewport[0], viewport[1], viewport[2], viewport[3]);
   }
 
   GetTexture() {
     return this.texture_three_js;
   }
+
   AreAllPixelsAlive() {
     return this.num_alive_pixels === this.num_pixels;
   }
+
+  GetNumDeadPixels() {
+    return this.num_pixels - this.num_alive_pixels;
+  }
+
+  GetDeadPixelRatio() {
+    return this.GetNumDeadPixels() / this.num_pixels;
+  }
+
   AreMostPixelsDead() {
     return this.num_alive_pixels < this.num_pixels * 0.1;
-  }
-  InstantlyKillMostPixels() {
-    // TODO
   }
 }
