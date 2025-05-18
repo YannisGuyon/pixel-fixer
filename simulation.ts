@@ -217,7 +217,7 @@ export class Simulation {
     texProps.__webglTexture = this.texture_input;
 
     this.num_pixels = this.texture_width * this.texture_height;
-    this.num_alive_pixels = this.num_pixels;
+    this.num_alive_pixels = 0;
     this.retrieved_buffer = new Uint8Array(this.num_pixels * 4);
   }
 
@@ -239,7 +239,7 @@ export class Simulation {
 
     this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture_input);
     this.gl.readPixels(0, 0, this.texture_width, this.texture_height, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.retrieved_buffer);
-    this.num_alive_pixels = 1;
+    this.num_alive_pixels = this.num_pixels - 1;
     for (let i = 0; i < this.num_pixels; ++i) {
       if (this.retrieved_buffer[i * 4] === 255) ++this.num_alive_pixels;
     }
@@ -281,8 +281,8 @@ export class Simulation {
     this.gl.bindTexture(this.gl.TEXTURE_2D, binded_texture);
     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, binded_framebuffer);
     this.gl.viewport(viewport[0], viewport[1], viewport[2], viewport[3]);
-    let is_pixel_healde = 1;
-    return is_pixel_healde;
+    let is_pixel_healed = 1;
+    return is_pixel_healed;
   }
 
   GetTexture() {
