@@ -92,13 +92,13 @@ function GetACroppedRegionOfTheScreenColorAndOfTheSimulation(x: number, y: numbe
           data[(j*w+i)*8+k] = 0;
         }
       } else {
-        data[(j*w+i)*8 + 0] = os.canvas_texture_cpu[(pixel_y*w+pixel_x)*4 + 0];
-        data[(j*w+i)*8 + 1] = os.canvas_texture_cpu[(pixel_y*w+pixel_x)*4 + 1];
-        data[(j*w+i)*8 + 2] = os.canvas_texture_cpu[(pixel_y*w+pixel_x)*4 + 2];
-        data[(j*w+i)*8 + 3] = os.canvas_texture_cpu[(pixel_y*w+pixel_x)*4 + 3];
-        data[(j*w+i)*8 + 4] = pixel_state[(pixel_y*w+pixel_x)*4 + 0];
-        data[(j*w+i)*8 + 5] = pixel_state[(pixel_y*w+pixel_x)*4 + 1];
-        data[(j*w+i)*8 + 6] = pixel_state[(pixel_y*w+pixel_x)*4 + 2];
+        data[(j*w+i)*8 + 0] = os.canvas_texture_cpu[(pixel_y*os.width+pixel_x)*4 + 0];
+        data[(j*w+i)*8 + 1] = os.canvas_texture_cpu[(pixel_y*os.width+pixel_x)*4 + 1];
+        data[(j*w+i)*8 + 2] = os.canvas_texture_cpu[(pixel_y*os.width+pixel_x)*4 + 2];
+        data[(j*w+i)*8 + 3] = os.canvas_texture_cpu[(pixel_y*os.width+pixel_x)*4 + 3];
+        data[(j*w+i)*8 + 4] = pixel_state[(pixel_y*os.width+pixel_x)*4 + 0];
+        data[(j*w+i)*8 + 5] = pixel_state[(pixel_y*os.width+pixel_x)*4 + 1];
+        data[(j*w+i)*8 + 6] = pixel_state[(pixel_y*os.width+pixel_x)*4 + 2];
         data[(j*w+i)*8 + 7] = 255;
       }
     }
