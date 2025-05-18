@@ -457,9 +457,12 @@ export class Magnifier {
       new_center_x = center_x;
       new_center_y = center_y;
     } 
-    this.magnifier_dead_material.uniforms.magnifier_center.value = new THREE.Vector2(new_center_x/(window.innerWidth*0.5), new_center_y/(window.innerHeight*0.5));
-    this.magnifier_zombie_material.uniforms.magnifier_center.value = new THREE.Vector2(new_center_x/(window.innerWidth*0.5), new_center_y/(window.innerHeight*0.5));
-    this.magnifier_alive_material.uniforms.magnifier_center.value = new THREE.Vector2(new_center_x/(window.innerWidth*0.5), new_center_y/(window.innerHeight*0.5));
+    this.magnifier_dead_material.uniforms.magnifier_center.value.x = new_center_x/(window.innerWidth*0.5);
+    this.magnifier_dead_material.uniforms.magnifier_center.value.y = new_center_y/(window.innerHeight*0.5);
+    this.magnifier_zombie_material.uniforms.magnifier_center.value.x = new_center_x/(window.innerWidth*0.5);
+    this.magnifier_zombie_material.uniforms.magnifier_center.value.y = new_center_y/(window.innerHeight*0.5);
+    this.magnifier_alive_material.uniforms.magnifier_center.value.x = new_center_x/(window.innerWidth*0.5);
+    this.magnifier_alive_material.uniforms.magnifier_center.value.y = new_center_y/(window.innerHeight*0.5);
     for (let x=0; x<this.pixel_count; x++) {
       for (let y=0; y<this.pixel_count; y++) {
         this.pixels[x][y].position.x = new_center_x+x*this.pixel_size-this.pixel_size*Math.floor(this.pixel_count*0.5);
