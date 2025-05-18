@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { Magnifier } from "./magnifier";
+import { MagnifierFisheye } from "./magnifier_fisheye";
 import { Simulation } from "./simulation";
 import { Os } from "./os";
 
@@ -192,6 +193,8 @@ the_magnifier.visible = false;
 
 const magnifier = new Magnifier(scene);
 magnifier.SetVisible(false);
+const magnifier_fisheye = new MagnifierFisheye(scene);
+magnifier_fisheye.SetVisible(false);
 
 // Sounds
 let first_interaction = false;
@@ -265,6 +268,7 @@ document.addEventListener("mousedown", (event: MouseEvent) => {
       last_sim_press_screen.y = event.clientY;
     }
   }
+  SetMagnifiersPositions(event.clientX, event.clientY);
 });
 document.addEventListener("mouseup", (event: MouseEvent) => {
   mouse_position.x = event.clientX;
@@ -278,6 +282,7 @@ document.addEventListener("mouseup", (event: MouseEvent) => {
     arm_press.visible = false;
   }
   os.SetMouseReleased(event.clientX, event.clientY);
+  SetMagnifiersPositions(event.clientX, event.clientY);
 });
 document.addEventListener("mousemove", (event: MouseEvent) => {
   mouse_position.x = event.clientX;
@@ -327,8 +332,12 @@ document.addEventListener("mousemove", (event: MouseEvent) => {
     window.innerHeight - event.clientY - window.innerHeight / 2 - 755;
   arm_press.position.x = arm_release.position.x;
   arm_press.position.y = arm_release.position.y;
-  arm_magnifier.position.x = arm_release.position.x + 80;
-  arm_magnifier.position.y = arm_release.position.y + 100;
+  arm_magnifier.position.x = arm_release.position.x + 77;
+  arm_magnifier.position.y = arm_release.position.y + 103;
+  SetMagnifiersPositions(event.clientX, event.clientY);
+});
+
+function SetMagnifiersPositions(x:number, y:number) {
   if (arm_magnifier.visible) {
     magnifier.SetPixels(
       GetACroppedRegionOfTheScreenColorAndOfTheSimulation(
@@ -339,11 +348,20 @@ document.addEventListener("mousemove", (event: MouseEvent) => {
       )
     );
     magnifier.SetPosition(
-      event.clientX - window.innerWidth / 2,
-      -event.clientY + window.innerHeight / 2
+      x - window.innerWidth / 2,
+      -y + window.innerHeight / 2
+    );
+    magnifier_fisheye.SetPosition(
+      (x + 2016 / 2 - window.innerWidth / 2) / 2016,
+      (-y + 1512 / 2 + window.innerHeight / 2) / 1512
+    );
+  } else {
+    magnifier_fisheye.SetPosition(
+      (window.innerWidth / 2+ the_magnifier.position.x+20 + 2016 / 2 - window.innerWidth / 2) / 2016,
+      (-(window.innerHeight / 2 + the_magnifier.position.y-60) + 1512 / 2 + window.innerHeight / 2) / 1512
     );
   }
-});
+}
 
 window.addEventListener("resize", onWindowResize);
 function onWindowResize() {
@@ -374,6 +392,7 @@ function renderLoop(timestamp: number) {
   tablette_shader.uniforms.darkmode.value = os.toggles[0].on;
 
   the_magnifier.visible = os.MagnifierSettingIsOn() && !arm_magnifier.visible;
+  magnifier_fisheye.SetVisible(os.MagnifierSettingIsOn());
 
   if (magnifier.is_enabled !== os.MagnifierSettingIsOn()) {
     magnifier.is_enabled = os.MagnifierSettingIsOn();
