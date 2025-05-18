@@ -304,6 +304,10 @@ export class Magnifier {
   private magnifier_alive_material: THREE.ShaderMaterial;
   private magnifier_dead_material: THREE.ShaderMaterial;
   private pixels: THREE.Mesh[][];
+  private attributes_uid: THREE.Uint8BufferAttribute[][];
+  private attributes_uid_array: Array<number>[][];
+  private attributes_color: THREE.Uint8BufferAttribute[][];
+  private attributes_color_array: Array<number>[][];
   private pixel_size: number;
   public pixel_count: number;
   private is_grabbed: boolean;
@@ -313,6 +317,10 @@ export class Magnifier {
   public constructor(scene: THREE.Scene) {
     this.scene = scene;
     this.pixels = [];
+    this.attributes_uid = [];
+    this.attributes_uid_array = [];
+    this.attributes_color = [];
+    this.attributes_color_array = [];
     this.pixel_count = 7;
     this.pixel_size = 40;
     this.initial_position_x = 500;
@@ -351,13 +359,21 @@ export class Magnifier {
     });
     for (let x=0; x<this.pixel_count; x++) {
       this.pixels[x] = [];
+      this.attributes_uid[x] = [];
+      this.attributes_uid_array[x] = [];
+      this.attributes_color[x] = [];
+      this.attributes_color_array[x] = [];
       for (let y=0; y<this.pixel_count; y++) {
         this.pixels[x][y] = new THREE.Mesh(
           new THREE.PlaneGeometry(this.pixel_size, this.pixel_size, 1, 1),
           this.magnifier_alive_material
         );
-        this.pixels[x][y].geometry.setAttribute('uid', new THREE.Uint8BufferAttribute([x,y,x,y, x,y,x,y], 2));
-        this.pixels[x][y].geometry.setAttribute('color', new THREE.Uint8BufferAttribute([0,0,0,0,0,0,0,0,0,0,0,0],3));
+        this.attributes_uid_array[x][y] = [x,y,x,y, x,y,x,y];
+        this.attributes_uid[x][y] = new THREE.Uint8BufferAttribute(this.attributes_uid_array[x][y], 2);
+        this.attributes_color_array[x][y] = [0,0,0,0,0,0,0,0,0,0,0,0];
+        this.attributes_color[x][y] = new THREE.Uint8BufferAttribute(this.attributes_color_array[x][y], 3);
+        this.pixels[x][y].geometry.setAttribute('uid', this.attributes_uid[x][y]);
+        this.pixels[x][y].geometry.setAttribute('color', this.attributes_color[x][y]);
         this.pixels[x][y].position.x = 10000+x*this.pixel_size-this.pixel_size*Math.floor(this.pixel_count*0.5);
         this.pixels[x][y].position.y = 10000+y*this.pixel_size-this.pixel_size*Math.floor(this.pixel_count*0.5);
         this.pixels[x][y].position.z = -8;
@@ -402,11 +418,28 @@ export class Magnifier {
     for (let x=0; x<this.pixel_count; x++) {
       for (let y=0; y<this.pixel_count; y++) {
         this.pixels[x][y].material = this.mapPixelStateToShaderMaterial(pixelsContent[(x*this.pixel_count+y)*8+4], pixelsContent[(x*this.pixel_count+y)*8+6]);
-        this.pixels[x][y].geometry.setAttribute('uid', new THREE.Uint8BufferAttribute([x,y,x,y, x,y,x,y], 2));
+
         let r = pixelsContent[(x*this.pixel_count+y)*8];
         let g = pixelsContent[(x*this.pixel_count+y)*8 + 1];
         let b = pixelsContent[(x*this.pixel_count+y)*8 + 2];
-        this.pixels[x][y].geometry.setAttribute('color', new THREE.Uint8BufferAttribute([r,g,b,r,g,b,r,g,b,r,g,b], 3));
+
+        for (let i = 0; i< 4;++i) {
+          this.attributes_uid_array[x][y][i*2+0] = x;
+          this.attributes_uid_array[x][y][i*2+1] = y;
+          this.attributes_color_array[x][y][i*3+0] = r;
+          this.attributes_color_array[x][y][i*3+1] = g;
+          this.attributes_color_array[x][y][i*3+2] = b;
+        }
+        this.attributes_uid[x][y].set(this.attributes_uid_array[x][y]);
+        this.attributes_uid[x][y].needsUpdate = true;
+        // The lines above replace the following line and avoid memory allocations.
+        // this.pixels[x][y].geometry.setAttribute('uid', new THREE.Uint8BufferAttribute([x,y,x,y, x,y,x,y], 2));
+
+        this.attributes_color[x][y].set(this.attributes_color_array[x][y]);
+        this.attributes_color[x][y].needsUpdate = true;
+        // The lines above replace the following line and avoid memory allocations.
+        // this.pixels[x][y].geometry.setAttribute('color', new THREE.Uint8BufferAttribute([r,g,b,r,g,b,r,g,b,r,g,b], 3));
+
         this.pixels[x][y].position.x = x*this.pixel_size-this.pixel_size*Math.floor(this.pixel_count*0.5);
         this.pixels[x][y].position.y = y*this.pixel_size-this.pixel_size*Math.floor(this.pixel_count*0.5);
         this.pixels[x][y].position.z = -8;
