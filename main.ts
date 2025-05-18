@@ -85,16 +85,22 @@ function GetACroppedRegionOfTheScreenColorAndOfTheSimulation(x: number, y: numbe
   const data = new Uint8Array(w * h * (4 + 4));
   for (let i=0; i<w; i++) {
     for (let j=0; j<h; j++) {
-      const pixel_x = x+i;
-      const pixel_y = y+j;
-      data[(j*w+i)*8 + 0] = os.canvas_texture_cpu[(pixel_y*w+pixel_x)*4 + 0];
-      data[(j*w+i)*8 + 1] = os.canvas_texture_cpu[(pixel_y*w+pixel_x)*4 + 1];
-      data[(j*w+i)*8 + 2] = os.canvas_texture_cpu[(pixel_y*w+pixel_x)*4 + 2];
-      data[(j*w+i)*8 + 3] = os.canvas_texture_cpu[(pixel_y*w+pixel_x)*4 + 3];
-      data[(j*w+i)*8 + 4] = pixel_state[(pixel_y*w+pixel_x)*4 + 0];
-      data[(j*w+i)*8 + 5] = pixel_state[(pixel_y*w+pixel_x)*4 + 1];
-      data[(j*w+i)*8 + 6] = pixel_state[(pixel_y*w+pixel_x)*4 + 2];
-      data[(j*w+i)*8 + 7] = pixel_state[(pixel_y*w+pixel_x)*4 + 3];
+      const pixel_x = x+i-w/2;
+      const pixel_y = y+j-h/2;
+      if (pixel_x < 0 || pixel_x > os.width-w*0.5 || pixel_y < 0 || pixel_y > os.height-h*0.5) {
+        for (let k=0; k<8; k++) {
+          data[(j*w+i)*8+k] = 0;
+        }
+      } else {
+        data[(j*w+i)*8 + 0] = os.canvas_texture_cpu[(pixel_y*w+pixel_x)*4 + 0];
+        data[(j*w+i)*8 + 1] = os.canvas_texture_cpu[(pixel_y*w+pixel_x)*4 + 1];
+        data[(j*w+i)*8 + 2] = os.canvas_texture_cpu[(pixel_y*w+pixel_x)*4 + 2];
+        data[(j*w+i)*8 + 3] = os.canvas_texture_cpu[(pixel_y*w+pixel_x)*4 + 3];
+        data[(j*w+i)*8 + 4] = pixel_state[(pixel_y*w+pixel_x)*4 + 0];
+        data[(j*w+i)*8 + 5] = pixel_state[(pixel_y*w+pixel_x)*4 + 1];
+        data[(j*w+i)*8 + 6] = pixel_state[(pixel_y*w+pixel_x)*4 + 2];
+        data[(j*w+i)*8 + 7] = 255;
+      }
     }
   }
   return data;
