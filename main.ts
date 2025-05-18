@@ -2,7 +2,6 @@ import * as THREE from "three";
 import { Magnifier } from "./magnifier";
 import { Simulation } from "./simulation";
 import { Os } from "./os";
-import { SquaredNorm } from "./utils";
 
 function CreateRenderer() {
   let canvas = document.createElement("canvas");
@@ -290,36 +289,21 @@ document.addEventListener("mousemove", (event: MouseEvent) => {
     const y = event.clientY;
     let from_x = last_sim_press_screen.x;
     let from_y = last_sim_press_screen.y;
-    const x_diff = from_x === x ? 0 : from_x < x ? 1 : -1;
-    const y_diff = from_y === y ? 0 : from_y < y ? 1 : -1;
-    let num_steps = 0;
-    while (from_x != x || from_y != y) {
-      const top_x = from_x;
-      const top_y = from_y + y_diff;
-      const right_x = from_x + x_diff;
-      const right_y = from_y;
-      const top_right_x = from_x + x_diff * 0.6;
-      const top_right_y = from_y + y_diff * 0.6;
-      const top_dist = SquaredNorm(top_x - x, top_y - y);
-      const right_dist = SquaredNorm(right_x - x, right_y - y);
-      const top_right_dist = SquaredNorm(top_right_x - x, top_right_y - y);
-      if (top_dist < right_dist && top_dist < top_right_dist) {
-        // top is closer
-        from_y += y_diff;
-      } else if (right_dist < top_dist && right_dist < top_right_dist) {
-        // right is closer
-        from_x += x_diff;
-      } else {
-        // top right is closer
-        from_x += x_diff;
-        from_y += y_diff;
-      }
+    let x_diff = x - from_x;
+    let y_diff = y - from_y;
+    const max_num_pixels = Math.min(
+      300,
+      Math.max(Math.abs(x_diff), Math.abs(y_diff))
+    );
+    x_diff /= max_num_pixels;
+    y_diff /= max_num_pixels;
+    for (let i = 2; i < max_num_pixels; ++i) {
+      from_x += x_diff;
+      from_y += y_diff;
       simulation.PressScreen(
-        os.GetMouseXInTabletScreenSpace(from_x),
-        os.GetMouseYInTabletScreenSpace(from_y)
+        os.GetMouseXInTabletScreenSpace(Math.round(from_x)),
+        os.GetMouseYInTabletScreenSpace(Math.round(from_y))
       );
-      ++num_steps;
-      if (num_steps > 300) break;
     }
     last_sim_press_screen.x = x;
     last_sim_press_screen.y = y;
