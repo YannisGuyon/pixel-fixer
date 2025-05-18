@@ -95,7 +95,7 @@ function FragmentShaderDeadPixel() {
       if (distance_from_center>0.50) {
         discard;
       }
-      vec3 color = vColor;
+      vec3 color = vColor/255.0;
       if (vUv.x<0.05 || vUv.x>0.95 || vUv.y<0.05 || vUv.y>0.95) {
         gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
       } else {
@@ -183,7 +183,7 @@ function FragmentShaderAlivePixel() {
       if (distance_from_center>0.50) {
         discard;
       }
-      vec3 color = vColor;
+      vec3 color = vColor/255.0;
       if (vUv.x<0.05 || vUv.x>0.95 || vUv.y<0.05 || vUv.y>0.95) {
         gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
       } else {
@@ -257,7 +257,7 @@ function FragmentShaderZombiePixel() {
         out_color = color*2.0;
       }
       if (sdVesicaSegment(uv-position, a, b, 0.08) < 0.0) {
-        out_color = color*1.5;
+        out_color = vec3(0.0, 0.0, 0.0);
       }
       
       return out_color;
@@ -284,7 +284,7 @@ function FragmentShaderZombiePixel() {
       if (distance_from_center>0.50) {
         discard;
       }
-      vec3 color = vColor;
+      vec3 color = vColor/255.0;
       if (vUv.x<0.05 || vUv.x>0.95 || vUv.y<0.05 || vUv.y>0.95) {
         gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
       } else {
