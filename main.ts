@@ -123,8 +123,20 @@ const sound_taps = [
   document.getElementById("SoundTap4")! as HTMLMediaElement,
 ];
 
+// Overlays
+const game_over_overlay = document.getElementById(
+  "GameOverOverlay"
+)! as HTMLElement;
+const retry_button = document.getElementById(
+  "RetryButton"
+)! as HTMLButtonElement;
+retry_button.onclick = () => {
+  location.reload();
+};
+
 // Events
 document.addEventListener("mousedown", (event: MouseEvent) => {
+  if (!game_over_overlay.hidden) return;
   if (
     os.MagnifierSettingIsOn() &&
     event.clientX >= window.innerWidth / 2 + 370 &&
@@ -153,6 +165,7 @@ document.addEventListener("mousedown", (event: MouseEvent) => {
   }
 });
 document.addEventListener("mouseup", (event: MouseEvent) => {
+  if (!game_over_overlay.hidden) return;
   if (arm_magnifier.visible) {
     arm_release.visible = false;
     arm_press.visible = false;
@@ -163,6 +176,7 @@ document.addEventListener("mouseup", (event: MouseEvent) => {
   os.SetMouseReleased(event.clientX, event.clientY);
 });
 document.addEventListener("mousemove", (event: MouseEvent) => {
+  if (!game_over_overlay.hidden) return;
   os.SetMouseMove(event.clientX, event.clientY);
   console.log(window.innerHeight);
   arm_release.position.x =
@@ -180,11 +194,13 @@ document.addEventListener("mousemove", (event: MouseEvent) => {
 });
 
 document.addEventListener("keydown", (event: KeyboardEvent) => {
+  if (!game_over_overlay.hidden) return;
   if (event.code === "ShiftLeft") {
     magnifier.Grab();
   }
 });
 document.addEventListener("keyup", (event: KeyboardEvent) => {
+  if (!game_over_overlay.hidden) return;
   if (event.code === "ShiftLeft") {
     magnifier.Release();
   }
@@ -192,7 +208,7 @@ document.addEventListener("keyup", (event: KeyboardEvent) => {
 
 let tablette = new THREE.Mesh(
   new THREE.PlaneGeometry(width, height, 1),
-  new THREE.MeshStandardMaterial({ map: os.canvas_texture})
+  new THREE.MeshStandardMaterial({ map: os.canvas_texture })
 );
 tablette.position.x = 0;
 tablette.position.y = 0;
@@ -239,6 +255,10 @@ function renderLoop(timestamp: number) {
     average_duration.toString() + " s";
 
   simulation.Simulate();
+
+  if (simulation.AreMostPixelsDead()) {
+    game_over_overlay.hidden = true;
+  }
 
   renderer.autoClear = false;
   renderer.clear();

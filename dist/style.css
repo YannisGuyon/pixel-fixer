@@ -19,25 +19,127 @@ body {
     top: 40px;
     background-color: transparent;
     color: #720000;
+    z-index: 30;
     /*display: none;*/
 }
 
-#Pause {
+#GameOverOverlay {
     position: absolute;
-    left: 5px;
-    bottom: 5px;
-    background-color: transparent;
-    color: white;
-    display: none;
-    opacity: 0.5;
-    font-family: din-round, sans-serif;
-    font-size: 7em;
+    background: rgba(2, 0, 36, 0.9);
+    background: linear-gradient(346deg, rgba(146, 11, 11, 0.9) 0%, rgba(25, 6, 95, 0.9) 43%, rgba(2, 37, 58, 0.9) 91%);
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 20;
+    overflow: hidden;
+    cursor: pointer;
+    /* display: none; */
 }
 
-#Debug {
+#Title {
     position: absolute;
-    left: 10px;
-    top: 60px;
-    background-color: transparent;
-    color: #bbbbbb;
+    top: 10%;
+    left: 5%;
+    width: 50%;
+}
+
+#Title p {
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: monospace;
+    font-size: 5em;
+    font-weight: 700;
+    color: #f5f5f5;
+    text-shadow: 1px 1px 1px #919191,
+        1px 2px 1px #919191,
+        1px 3px 1px #919191,
+        1px 4px 1px #919191,
+        1px 5px 1px #919191,
+        1px 6px 1px #919191,
+        1px 7px 1px #919191,
+        1px 8px 1px #919191,
+        1px 9px 1px #919191,
+        1px 10px 1px #919191,
+        1px 18px 6px rgba(16, 16, 16, 0.4),
+        1px 22px 10px rgba(16, 16, 16, 0.2),
+        1px 25px 35px rgba(16, 16, 16, 0.2),
+        1px 30px 60px rgba(16, 16, 16, 0.4);
+    transform: rotate(-11deg);
+}
+
+#Subtitle {
+    text-align: center;
+    font-family: serif;
+    font-size: 2em;
+    color: #ff0000;
+    text-shadow: -3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000, 3px 3px 0 #000;
+    transform: rotate(-11deg);
+}
+
+#GameOver {
+    position: absolute;
+    bottom: 5%;
+    left: 5%;
+    right: 5%;
+    font-family: fantasy;
+    font-size: 12em;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+#RetryButton {
+    position: absolute;
+    top: 15%;
+    right: 5%;
+    width: 30%;
+    height: 30%;
+
+    appearance: button;
+    background-color: #d3444b;
+    border: solid transparent;
+    border-width: 0 0 4px;
+    box-sizing: border-box;
+    color: #FFFFFF;
+    cursor: pointer;
+    display: inline-block;
+    font-family: din-round, sans-serif;
+    font-size: 3em;
+    font-weight: 700;
+    letter-spacing: .8px;
+    line-height: 20px;
+    margin: 0;
+    outline: none;
+    overflow: visible;
+    padding: 13px 16px;
+    text-align: center;
+    text-transform: uppercase;
+    touch-action: manipulation;
+    transition: filter .2s;
+    user-select: none;
+    -webkit-user-select: none;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+#RetryButton:main,
+#RetryButton:focus {
+    user-select: auto;
+}
+
+#RetryButton:hover:not(:disabled):not(:active) {
+    filter: brightness(1.1);
+    -webkit-filter: brightness(1.1);
+}
+
+#RetryButton:active {
+    filter: brightness(0.6);
+    -webkit-filter: brightness(0.6);
+}
+
+#RetryButton:disabled {
+    cursor: auto;
 }

@@ -10,9 +10,8 @@
 </head>
 
 <body>
-    <div id="Pause">Pause</div>
     <div id="Fps"></div>
-    <div id="Debug"></div>
+
     <audio id="SoundTap1">
         <source src="resources/sound/BRS_Phone_Cell_Button_Press.wav" type="audio/mpeg">
     </audio>
@@ -55,7 +54,17 @@
     <audio id="SoundXorcizeSuccess">
         <source src="resources/sound/sound-effect-twinklesparkle-115095.mp3" type="audio/mpeg">
     </audio>
+
     <script type="module" src="bundle.js"></script>
+
+    <div id="GameOverOverlay" hidden>
+        <div id="Title">
+            <p>Pixel Fixer Simulator 2.0</p>
+            <div id="Subtitle">Dead pixels should never come back!</div>
+        </div>
+        <div id="GameOver">GAME OVER</div>
+        <button id="RetryButton">RETRY</button>
+    </div>
 </body>
 
 </html>

@@ -180,4 +180,7 @@ export class Simulation {
   GetTexture() {
     return this.texture_three_js;
   }
+  AreMostPixelsDead() {
+    return true;  // TODO
+  }
 }

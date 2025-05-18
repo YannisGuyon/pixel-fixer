@@ -182,7 +182,6 @@ export class Os {
     if (disable_all_interactions) {
       this.mouse_pressed = false;
       this.mouse_released = false;
-      return;
     }
 
     if (this.mouse_pressed) {
