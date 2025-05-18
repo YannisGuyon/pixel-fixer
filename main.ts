@@ -60,6 +60,16 @@ scene.add(table);
 
 const os = new Os(width, height, renderer);
 
+let tablette = new THREE.Mesh(
+  new THREE.PlaneGeometry(width, height, 1),
+  //new THREE.MeshStandardMaterial({ map: os.canvas_texture})
+  new THREE.MeshStandardMaterial({ map: simulation.GetTexture()})
+);
+tablette.position.x = 0;
+tablette.position.y = 0;
+tablette.position.z = -9;
+scene.add(tablette);
+
 const arm_release = new THREE.Mesh(
   new THREE.PlaneGeometry(1007 * 0.5, 3098 * 0.5, 1, 1),
   new THREE.MeshStandardMaterial({
@@ -189,15 +199,6 @@ document.addEventListener("keyup", (event: KeyboardEvent) => {
     magnifier.Release();
   }
 });
-
-let tablette = new THREE.Mesh(
-  new THREE.PlaneGeometry(width, height, 1),
-  new THREE.MeshStandardMaterial({ map: os.canvas_texture})
-);
-tablette.position.x = 0;
-tablette.position.y = 0;
-tablette.position.z = -9;
-scene.add(tablette);
 
 window.addEventListener("resize", onWindowResize);
 function onWindowResize() {

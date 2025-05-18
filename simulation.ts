@@ -16,7 +16,8 @@ function loadShader(gl:WebGLRenderingContext|WebGL2RenderingContext, type:GLenum
 
 export class Simulation {
   private gl: WebGLRenderingContext|WebGL2RenderingContext;
-  private program: WebGLProgram;
+  private program_simulate: WebGLProgram;
+  private program_kill_pixels: WebGLProgram;
   private framebuffer: WebGLFramebuffer;
   private texture_input: WebGLTexture;
   private texture_framebuffer: WebGLTexture;
@@ -62,7 +63,7 @@ export class Simulation {
     this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, attachmentPoint, this.gl.TEXTURE_2D, this.texture_framebuffer, 0);
     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
     
-    const vsSource = `#version 300 es
+    const vertex_shader_source = `#version 300 es
       out vec2 vUv;
       void main() {
         if (gl_VertexID == 0) {
@@ -84,26 +85,26 @@ export class Simulation {
     // Red channel : Alive (255) or Dead (0)
     // Green channel : Timestamp
     // Blue channel : Zombie (255)
-    const fsSource = `#version 300 es
+    const fragment_shader_simulation_source = `#version 300 es
       precision highp float;
       in vec2 vUv;
       out vec4 out_color;
-		  uniform sampler2D current_state;
-		  uniform vec2 current_state_size;
+		  uniform sampler2D simulation;
+		  uniform vec2 simulation_size;
       void main() {
-        vec2 pixel_size = vec2(1.0/current_state_size.x, 1.0/current_state_size.y);
+        vec2 pixel_size = vec2(1.0/simulation_size.x, 1.0/simulation_size.y);
         
-        ivec4 data00 = ivec4(texture(current_state, vUv+vec2(-pixel_size.x, -pixel_size.y))*255.0);
-        ivec4 data01 = ivec4(texture(current_state, vUv+vec2(0.0, -pixel_size.y))*255.0);
-        ivec4 data02 = ivec4(texture(current_state, vUv+vec2(pixel_size.x, -pixel_size.y))*255.0);
+        ivec4 data00 = ivec4(texture(simulation, vUv+vec2(-pixel_size.x, -pixel_size.y))*255.0);
+        ivec4 data01 = ivec4(texture(simulation, vUv+vec2(0.0, -pixel_size.y))*255.0);
+        ivec4 data02 = ivec4(texture(simulation, vUv+vec2(pixel_size.x, -pixel_size.y))*255.0);
 
-        ivec4 data10 = ivec4(texture(current_state, vUv+vec2(-pixel_size.x, 0.0))*255.0);
-        ivec4 data11 = ivec4(texture(current_state, vUv+vec2(0.0, 0.0))*255.0);
-        ivec4 data12 = ivec4(texture(current_state, vUv+vec2(pixel_size.x, 0.0))*255.0);
+        ivec4 data10 = ivec4(texture(simulation, vUv+vec2(-pixel_size.x, 0.0))*255.0);
+        ivec4 data11 = ivec4(texture(simulation, vUv)*255.0);
+        ivec4 data12 = ivec4(texture(simulation, vUv+vec2(pixel_size.x, 0.0))*255.0);
 
-        ivec4 data20 = ivec4(texture(current_state, vUv+vec2(-pixel_size.x, pixel_size.y))*255.0);
-        ivec4 data21 = ivec4(texture(current_state, vUv+vec2(0.0, pixel_size.y))*255.0);
-        ivec4 data22 = ivec4(texture(current_state, vUv+vec2(pixel_size.x, pixel_size.y))*255.0);
+        ivec4 data20 = ivec4(texture(simulation, vUv+vec2(-pixel_size.x, pixel_size.y))*255.0);
+        ivec4 data21 = ivec4(texture(simulation, vUv+vec2(0.0, pixel_size.y))*255.0);
+        ivec4 data22 = ivec4(texture(simulation, vUv+vec2(pixel_size.x, pixel_size.y))*255.0);
 
         if (data11.r == 255) { // Alive
           int zombie_count = data00.b==255?1:0;
@@ -131,12 +132,34 @@ export class Simulation {
         out_color = vec4(data11)/255.0;
       }
     `;
-    const vertexShader = loadShader(this.gl, this.gl.VERTEX_SHADER, vsSource);
-    const fragmentShader = loadShader(this.gl, this.gl.FRAGMENT_SHADER, fsSource);
-    this.program = this.gl.createProgram();
-    this.gl.attachShader(this.program, vertexShader!);
-    this.gl.attachShader(this.program, fragmentShader!);
-    this.gl.linkProgram(this.program);
+
+    const fragment_shader_kill_pixels_source = `#version 300 es
+      precision highp float;
+      in vec2 vUv;
+      out vec4 out_color;
+		  uniform sampler2D simulation;
+		  uniform vec2 position_click;
+      void main() {
+        ivec4 pixel = ivec4(texture(simulation, vUv)*255.0);
+        if (length(vUv-position_click)<0.1) {
+          pixel = ivec4(0, 255, 0, 255); // Dead
+        }
+        out_color = vec4(pixel)/255.0;
+      }
+    `;
+    const vertex_shader = loadShader(this.gl, this.gl.VERTEX_SHADER, vertex_shader_source);
+    const fragment_shader_simulate = loadShader(this.gl, this.gl.FRAGMENT_SHADER, fragment_shader_simulation_source);
+    const fragment_shader_kill_pixels = loadShader(this.gl, this.gl.FRAGMENT_SHADER, fragment_shader_kill_pixels_source);
+
+    this.program_simulate = this.gl.createProgram();
+    this.gl.attachShader(this.program_simulate, vertex_shader!);
+    this.gl.attachShader(this.program_simulate, fragment_shader_simulate!);
+    this.gl.linkProgram(this.program_simulate);
+
+    this.program_kill_pixels = this.gl.createProgram();
+    this.gl.attachShader(this.program_kill_pixels, vertex_shader!);
+    this.gl.attachShader(this.program_kill_pixels, fragment_shader_kill_pixels!);
+    this.gl.linkProgram(this.program_kill_pixels);
 
     const forceTextureInitialization = function() {
       const material = new THREE.MeshBasicMaterial();
@@ -161,6 +184,7 @@ export class Simulation {
     let texProps = renderer.properties.get(this.texture_three_js);
     texProps.__webglTexture = this.texture_input;
   }
+
   Simulate() {
     const viewport = this.gl.getParameter(this.gl.VIEWPORT);
     const binded_framebuffer = this.gl.getParameter(this.gl.FRAMEBUFFER_BINDING);
@@ -169,14 +193,32 @@ export class Simulation {
     this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture_input);
     this.gl.activeTexture(this.gl.TEXTURE0);
     this.gl.viewport(0, 0, this.texture_width, this.texture_height);
-    this.gl.useProgram(this.program);
-    this.gl.uniform2f(this.gl.getUniformLocation(this.program, "current_state_size"), this.texture_width, this.texture_height);
+    this.gl.useProgram(this.program_simulate);
+    this.gl.uniform2f(this.gl.getUniformLocation(this.program_simulate, "simulation_size"), this.texture_width, this.texture_height);
     this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
     this.gl.copyTexImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA8, 0, 0, this.texture_width, this.texture_height, 0);
     this.gl.bindTexture(this.gl.TEXTURE_2D, binded_texture);
     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, binded_framebuffer);
     this.gl.viewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 	}
+
+  PressScreen(x:number, y:number) {
+    const viewport = this.gl.getParameter(this.gl.VIEWPORT);
+    const binded_framebuffer = this.gl.getParameter(this.gl.FRAMEBUFFER_BINDING);
+    const binded_texture = this.gl.getParameter(this.gl.TEXTURE_BINDING_2D);
+    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.framebuffer);
+    this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture_input);
+    this.gl.activeTexture(this.gl.TEXTURE0);
+    this.gl.viewport(0, 0, this.texture_width, this.texture_height);
+    this.gl.useProgram(this.program_kill_pixels);
+    this.gl.uniform2f(this.gl.getUniformLocation(this.program_kill_pixels, "position_click"), x, y);
+    this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+    this.gl.copyTexImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA8, 0, 0, this.texture_width, this.texture_height, 0);
+    this.gl.bindTexture(this.gl.TEXTURE_2D, binded_texture);
+    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, binded_framebuffer);
+    this.gl.viewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+  }
+
   GetTexture() {
     return this.texture_three_js;
   }
