@@ -388,6 +388,10 @@ export class Magnifier {
         this.pixels[x][y].scale.y = Math.sin(Date.now()*0.01+(x*y)+x)*0.2+0.8;
       }
     }
+
+    if(this.is_grabbed){
+      this.SetPosition(this.current_mouse_position_x, this.current_mouse_position_y);
+    }
   }
   SetPosition(center_x: number, center_y:number) {
     this.current_mouse_position_x = center_x;
@@ -413,7 +417,6 @@ export class Magnifier {
   }
   Grab() {
     this.is_grabbed = true;
-    this.SetPosition(this.current_mouse_position_x, this.current_mouse_position_y);
   }
   Release() {
     this.is_grabbed = false;
