@@ -89,6 +89,11 @@ export class MagnifierFisheyeTablet {
                 vec2 newUv = magnifier_center + diff *0.02;
                 vec2 newNewUv = vec2(newUv.x/640.*480., newUv.y);
 
+                ivec4 simulation_result = ivec4(texture2D(simulation, newNewUv)*255.0);
+                int is_alive = simulation_result.r == 255 ? 1 : 0;
+                int is_dead = simulation_result.r < 255 ? 1 : 0;
+                int is_zombie = simulation_result.b == 255 ? 1 : 0;
+
                 // gl_FragColor = vec4(mod(newNewUv.x*640.0,1.0), mod(newNewUv.y*480.0,1.0), 0, 1);
                 // gl_FragColor = texture2D(simulation, newNewUv);
                 // gl_FragColor = texture2D(canvas, newNewUv);
