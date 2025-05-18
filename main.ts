@@ -324,7 +324,7 @@ document.addEventListener("mousemove", (event: MouseEvent) => {
   arm_magnifier.position.x = arm_release.position.x + 80;
   arm_magnifier.position.y = arm_release.position.y + 100;
   if(arm_magnifier.visible){
-    magnifier.SetPixels(GetACroppedRegionOfTheScreenColorAndOfTheSimulation(mouse_position.x, mouse_position.y, magnifier.pixel_count, magnifier.pixel_count));
+    magnifier.SetPixels(GetACroppedRegionOfTheScreenColorAndOfTheSimulation(os.GetMouseXInTabletScreenSpaceInteger(mouse_position.x), os.GetMouseYInTabletScreenSpaceInteger(mouse_position.y), magnifier.pixel_count, magnifier.pixel_count));
     magnifier.SetPosition(
       event.clientX - window.innerWidth / 2,
       -event.clientY + window.innerHeight / 2
