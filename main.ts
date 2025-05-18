@@ -60,9 +60,8 @@ scene.add(table);
 
 const os = new Os(width, height, renderer, simulation);
 
-function GetACroppedRegionOfTheScreenColorAndOfTheSimulation(/*x: number, y: number*/) {
-  //const pixel_state = simulation.GetCPUTexture();
-
+let gl = renderer.getContext();
+function GetACroppedRegionOfTheScreenColorAndOfTheSimulation(x: number, y: number, w: number, h: number) {
   // data[(pixel_y*7+pixel_x)*8 + 0] -> Red color
   // data[(pixel_y*7+pixel_x)*8 + 1] -> Green color
   // data[(pixel_y*7+pixel_x)*8 + 2] -> Blue color
@@ -70,8 +69,34 @@ function GetACroppedRegionOfTheScreenColorAndOfTheSimulation(/*x: number, y: num
   // data[(pixel_y*7+pixel_x)*8 + 4] -> State (255 -> Alive | 0 -> Dead)
   // data[(pixel_y*7+pixel_x)*8 + 5] -> A timestamp
   // data[(pixel_y*7+pixel_x)*8 + 6] -> Is Zombie (255 -> Yes | 0 -> No)
-  // data[(pixel_y*7+pixel_x)*8 + 7] -> Padding for the memory
-  const data = new Uint8Array(7 * 7 * (4 + 4)); // 64 pixels with their RGBA color and simulation state.
+  // data[(pixel_y*7+pixel_x)*8 + 7] -> Visibility (255 -> Yes | 0 -> No)
+  let pixel_state = simulation.GetCPUTexture();
+  os.canvas_texture_webgl = renderer.properties.get(os.canvas_texture).__webglTexture;
+  if (os.canvas_texture_webgl !== undefined) {
+    gl.bindFramebuffer(gl.FRAMEBUFFER, os.framebuffer_to_read_the_CPU_texture);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, os.canvas_texture_webgl, 0);
+    if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) == gl.FRAMEBUFFER_COMPLETE) {
+      gl.readPixels(0, 0, os.width, os.height, gl.RGBA, gl.UNSIGNED_BYTE, os.canvas_texture_cpu);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, null, 0);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    }
+  }
+
+  const data = new Uint8Array(w * h * (4 + 4));
+  for (let i=0; i<w; i++) {
+    for (let j=0; j<h; j++) {
+      const pixel_x = x+i;
+      const pixel_y = y+j;
+      data[(j*w+i)*8 + 0] = os.canvas_texture_cpu[(pixel_y*w+pixel_x)*4 + 0];
+      data[(j*w+i)*8 + 1] = os.canvas_texture_cpu[(pixel_y*w+pixel_x)*4 + 1];
+      data[(j*w+i)*8 + 2] = os.canvas_texture_cpu[(pixel_y*w+pixel_x)*4 + 2];
+      data[(j*w+i)*8 + 3] = os.canvas_texture_cpu[(pixel_y*w+pixel_x)*4 + 3];
+      data[(j*w+i)*8 + 4] = pixel_state[(pixel_y*w+pixel_x)*4 + 0];
+      data[(j*w+i)*8 + 5] = pixel_state[(pixel_y*w+pixel_x)*4 + 1];
+      data[(j*w+i)*8 + 6] = pixel_state[(pixel_y*w+pixel_x)*4 + 2];
+      data[(j*w+i)*8 + 7] = pixel_state[(pixel_y*w+pixel_x)*4 + 3];
+    }
+  }
   return data;
 }
 
@@ -161,7 +186,12 @@ magnifier.SetVisible(false);
 // Sounds
 let first_interaction = false;
 const sound_track = document.getElementById("SoundTrack")! as HTMLMediaElement;
-const sound_taps = [document.getElementById("SoundTap")! as HTMLMediaElement];
+const sounds_tap = [document.getElementById("SoundTap")! as HTMLMediaElement];
+const sounds_pixel = [
+  document.getElementById("SoundPixel1")! as HTMLMediaElement,
+  document.getElementById("SoundPixel2")! as HTMLMediaElement,
+  document.getElementById("SoundPixel3")! as HTMLMediaElement,
+];
 
 // Overlays
 const game_over_overlay = document.getElementById(
@@ -177,7 +207,10 @@ for (const retry_button of document.getElementsByClassName("RetryButton")) {
 }
 
 // Events
+const mouse_position = new THREE.Vector2(0, 0);
 document.addEventListener("mousedown", (event: MouseEvent) => {
+  mouse_position.x = event.clientX;
+  mouse_position.y = event.clientY;
   if (!success_overlay.hidden || !game_over_overlay.hidden) return;
   if (
     os.MagnifierSettingIsOn() &&
@@ -205,7 +238,7 @@ document.addEventListener("mousedown", (event: MouseEvent) => {
   os.SetMousePressed(event.clientX, event.clientY);
   if (arm_press.visible) {
     const sound_tap =
-      sound_taps[THREE.MathUtils.randInt(0, sound_taps.length - 1)];
+      sounds_tap[THREE.MathUtils.randInt(0, sounds_tap.length - 1)];
     sound_tap.play();
     if (
       os.IsMouseOverTabletScreen(event.clientX, event.clientY) &&
@@ -218,6 +251,8 @@ document.addEventListener("mousedown", (event: MouseEvent) => {
   }
 });
 document.addEventListener("mouseup", (event: MouseEvent) => {
+  mouse_position.x = event.clientX;
+  mouse_position.y = event.clientY;
   if (!success_overlay.hidden || !game_over_overlay.hidden) return;
   if (arm_magnifier.visible) {
     arm_release.visible = false;
@@ -229,6 +264,8 @@ document.addEventListener("mouseup", (event: MouseEvent) => {
   os.SetMouseReleased(event.clientX, event.clientY);
 });
 document.addEventListener("mousemove", (event: MouseEvent) => {
+  mouse_position.x = event.clientX;
+  mouse_position.y = event.clientY;
   if (!success_overlay.hidden || !game_over_overlay.hidden) return;
   os.SetMouseMove(event.clientX, event.clientY);
   if (
@@ -313,9 +350,23 @@ function renderLoop(timestamp: number) {
     }
   }
 
+  if (
+    success_overlay.hidden &&
+    game_over_overlay.hidden &&
+    arm_magnifier.visible &&
+    os.IsMouseOverTabletScreen(mouse_position.x, mouse_position.y) &&
+    THREE.MathUtils.randInt(0, 63) == 0
+  ) {
+    const sound_pixel =
+      sounds_pixel[THREE.MathUtils.randInt(0, sounds_pixel.length - 1)];
+    sound_pixel.play();
+  }
+
   renderer.autoClear = false;
   renderer.clear();
   renderer.render(scene, camera);
+
+  GetACroppedRegionOfTheScreenColorAndOfTheSimulation(0, 0, 7, 7);
 
   previous_timestamp = timestamp;
 }
