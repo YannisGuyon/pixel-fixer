@@ -60,10 +60,20 @@ scene.add(table);
 
 const os = new Os(width, height, renderer, simulation);
 
+let tablette_shader = new THREE.ShaderMaterial({
+  uniforms: {
+    canvas: { value: os.canvas_texture },
+    simulation: { value: simulation.GetTexture() }
+  },
+  vertexShader: `varying vec2 vUv; void main() {gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); vUv = uv;}`,
+  fragmentShader: `varying vec2 vUv; uniform sampler2D canvas; uniform sampler2D simulation; void main() {gl_FragColor = mix(texture2D(simulation, vUv), texture2D(canvas, vUv), 0.5);}`,
+  transparent: true
+});
 let tablette = new THREE.Mesh(
   new THREE.PlaneGeometry(width, height, 1),
   //new THREE.MeshStandardMaterial({ map: os.canvas_texture})
-  new THREE.MeshStandardMaterial({ map: simulation.GetTexture() })
+  //new THREE.MeshStandardMaterial({ map: simulation.GetTexture() })
+  tablette_shader
 );
 tablette.position.x = 0;
 tablette.position.y = 0;

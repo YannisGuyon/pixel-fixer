@@ -18,6 +18,7 @@ export class Simulation {
   private gl: WebGLRenderingContext|WebGL2RenderingContext;
   private program_simulate: WebGLProgram;
   private program_kill_pixels: WebGLProgram;
+  private program_heal_pixels: WebGLProgram;
   private framebuffer: WebGLFramebuffer;
   private texture_input: WebGLTexture;
   private texture_framebuffer: WebGLTexture;
@@ -121,11 +122,9 @@ export class Simulation {
           } else {
             data11.g -= zombie_count;
           }
-        }
-        if (data11.r != 0 && data11.r < 255) { // Dieing
+        } else if (data11.r != 0 && data11.r < 255) { // Dieing
           data11.r -= 1;
-        }
-        if (data11.r == 0) { // Dead
+        } else if (data11.r == 0) { // Dead
           data11.g -= 1;
           if (data11.g == 0) {
             data11.b = 255;
@@ -145,14 +144,34 @@ export class Simulation {
       void main() {
         ivec4 pixel = ivec4(texture(simulation, vUv)*255.0);
         if (length(vUv*vec2(simulation_screen_ratio, 1.0)-position_click*vec2(simulation_screen_ratio, 1.0))<0.02) {
-          pixel = ivec4(254, 255, 0, 255); // Dead
+          pixel = ivec4(254, 255, 0, 255); // Dieing
         }
         out_color = vec4(pixel)/255.0;
       }
     `;
+
+    const fragment_shader_heal_pixels_source = `#version 300 es
+      precision highp float;
+      in vec2 vUv;
+      out vec4 out_color;
+		  uniform sampler2D simulation;
+		  uniform vec2 position_click;
+		  uniform vec2 icon_size;
+		  uniform float simulation_screen_ratio;
+      void main() {
+        ivec4 pixel = ivec4(texture(simulation, vUv)*255.0);
+        vec2 d = abs(vUv-position_click-vec2(0.05, 0.07))-icon_size;
+        if (length(max(d, 0.0)) + min(max(d.x, d.y), 0.0) < 0.0) {
+          pixel = ivec4(255, 255, 127, 255); // Alive
+        }
+        out_color = vec4(pixel)/255.0;
+      }
+    `;
+
     const vertex_shader = loadShader(this.gl, this.gl.VERTEX_SHADER, vertex_shader_source);
     const fragment_shader_simulate = loadShader(this.gl, this.gl.FRAGMENT_SHADER, fragment_shader_simulation_source);
     const fragment_shader_kill_pixels = loadShader(this.gl, this.gl.FRAGMENT_SHADER, fragment_shader_kill_pixels_source);
+    const fragment_shader_heal_pixels = loadShader(this.gl, this.gl.FRAGMENT_SHADER, fragment_shader_heal_pixels_source);
 
     this.program_simulate = this.gl.createProgram();
     this.gl.attachShader(this.program_simulate, vertex_shader!);
@@ -163,6 +182,11 @@ export class Simulation {
     this.gl.attachShader(this.program_kill_pixels, vertex_shader!);
     this.gl.attachShader(this.program_kill_pixels, fragment_shader_kill_pixels!);
     this.gl.linkProgram(this.program_kill_pixels);
+
+    this.program_heal_pixels = this.gl.createProgram();
+    this.gl.attachShader(this.program_heal_pixels, vertex_shader!);
+    this.gl.attachShader(this.program_heal_pixels, fragment_shader_heal_pixels!);
+    this.gl.linkProgram(this.program_heal_pixels);
 
     const forceTextureInitialization = function() {
       const material = new THREE.MeshBasicMaterial();
@@ -223,6 +247,27 @@ export class Simulation {
     this.gl.viewport(viewport[0], viewport[1], viewport[2], viewport[3]);
   }
 
+  HealPixelsAtPosition(x: number, y: number, width: number, height: number) {
+    const viewport = this.gl.getParameter(this.gl.VIEWPORT);
+    const binded_framebuffer = this.gl.getParameter(this.gl.FRAMEBUFFER_BINDING);
+    const binded_texture = this.gl.getParameter(this.gl.TEXTURE_BINDING_2D);
+    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.framebuffer);
+    this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture_input);
+    this.gl.activeTexture(this.gl.TEXTURE0);
+    this.gl.viewport(0, 0, this.texture_width, this.texture_height);
+    this.gl.useProgram(this.program_heal_pixels);
+    this.gl.uniform2f(this.gl.getUniformLocation(this.program_heal_pixels, "position_click"), x/this.texture_width, y/this.texture_height);
+    this.gl.uniform2f(this.gl.getUniformLocation(this.program_heal_pixels, "icon_size"), 1.0/this.texture_width*width*0.5, 1.0/this.texture_width*height*0.7);
+    this.gl.uniform1f(this.gl.getUniformLocation(this.program_heal_pixels, "simulation_screen_ratio"), this.texture_width/this.texture_height);
+    this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+    this.gl.copyTexImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA8, 0, 0, this.texture_width, this.texture_height, 0);
+    this.gl.bindTexture(this.gl.TEXTURE_2D, binded_texture);
+    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, binded_framebuffer);
+    this.gl.viewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+    let is_pixel_healde = 1;
+    return is_pixel_healde;
+  }
+
   GetTexture() {
     return this.texture_three_js;
   }
@@ -234,11 +279,5 @@ export class Simulation {
   }
   InstantlyKillMostPixels() {
     // TODO
-  }
-  HealPixelsAtPosition(_x: number, _y: number, _width: number, _height: number) {
-    // TODO: Heal pixels in rect (tablet screen relative)
-    // Warning: position is not checked against tablet screen boundaries.
-    // TODO: Return the number of healed pixels in rect
-    return 0;
   }
 }
