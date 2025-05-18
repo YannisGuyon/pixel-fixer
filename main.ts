@@ -286,7 +286,7 @@ function renderLoop(timestamp: number) {
   } else {
     success_overlay.hidden = true; // TODO: Should not be necessary
     if (simulation.AreMostPixelsDead()) {
-      game_over_overlay.hidden = true;
+      game_over_overlay.hidden = false;
     }
   }
 
