@@ -54,6 +54,7 @@ export class OsPanelEmails extends OsPanel {
         mouse_y < this.final_position.y + this.texture.image.height - 55
       ) {
         this.show_email_details = true;
+        this.sound_404.volume = 0.4;
         this.sound_404.play();
       }
     }

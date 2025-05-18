@@ -188,9 +188,15 @@ export class Os {
       if (this.icons[i].CollectEvent(this.mouse_x, this.mouse_y)) {
         if (i < this.panels.length) {
           this.panels[i].enabled = true;
-          if (i === 0) this.sound_icon_notes.play();
+          if (i === 0) {
+            this.sound_icon_notes.volume = 0.4;
+            this.sound_icon_notes.play();
+          }
           if (i === 1) this.sound_icon_clock.play();
-          if (i === 2) this.sound_icon_weather.play();
+          if (i === 2) {
+            this.sound_icon_weather.volume = 0.4;
+            this.sound_icon_weather.play();
+          }
           if (i === 3) this.sound_icon_emails.play();
         } else if (i == this.icons.length - 2) {
           this.screen_is_locked = true;
@@ -270,9 +276,11 @@ export class Os {
             64
           ) != 0
         ) {
-          this.sound_xorcize_success.currentTime = 0;
+          this.sound_xorcize_success.currentTime = 0.3;
+          this.sound_xorcize_success.volume = 0.4;
           this.sound_xorcize_success.play();
         } else {
+          this.sound_xorcize_move.volume = 0.4;
           this.sound_xorcize_move.play();
         }
       }

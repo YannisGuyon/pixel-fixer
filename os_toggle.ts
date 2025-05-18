@@ -36,6 +36,7 @@ export class OsToggle {
     ) {
       if (this.rabid) return true; // Capture but do nothing
       this.sound_toggle.currentTime = 0;
+      this.sound_toggle.volume = 0.4;
       this.sound_toggle.play();
       this.on = !this.on;
       if (this.on && this.turns_rabid_when_toggled) {

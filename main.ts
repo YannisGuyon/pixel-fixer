@@ -374,6 +374,7 @@ function renderLoop(timestamp: number) {
   ) {
     const sound_pixel =
       sounds_pixel[THREE.MathUtils.randInt(0, sounds_pixel.length - 1)];
+    sound_pixel.volume = 0.4;
     sound_pixel.play();
   }
 
