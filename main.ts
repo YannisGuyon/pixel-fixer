@@ -292,7 +292,7 @@ document.addEventListener("mousemove", (event: MouseEvent) => {
     let x_diff = x - from_x;
     let y_diff = y - from_y;
     const max_num_pixels = Math.min(
-      300,
+      100,
       Math.max(Math.abs(x_diff), Math.abs(y_diff))
     );
     x_diff /= max_num_pixels;

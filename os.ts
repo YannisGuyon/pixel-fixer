@@ -123,6 +123,12 @@ export class Os {
     let tablet_y = Math.floor((window.innerHeight - this.height) / 2);
     return 1 - Math.max(0, Math.min((y - tablet_y) / (this.height - 1), 1));
   }
+  public GetMouseXInTabletScreenSpaceInteger(x: number) {
+    return x - Math.floor((window.innerWidth - this.width) / 2);
+  }
+  public GetMouseYInTabletScreenSpaceInteger(y: number) {
+    return y - Math.floor((window.innerHeight - this.height) / 2);
+  }
   public SetMouseMove(x: number, y: number) {
     // Centered
     let tablet_x = Math.floor((window.innerWidth - this.width) / 2);
