@@ -88,7 +88,7 @@ function FragmentShaderDeadPixel() {
       vec2 norm_position_2d = position_2d*vec2(screen_ratio, 1.0);
       vec2 norm_magnifier_center = magnifier_center*vec2(screen_ratio, 1.0);
       float distance_from_center = length(norm_position_2d-norm_magnifier_center);
-      if (distance_from_center>0.2) {
+      if (distance_from_center>0.50) {
         discard;
       }
       vec3 color = vec3(0.8, 0.4, 1.0);
@@ -175,7 +175,7 @@ function FragmentShaderAlivePixel() {
       vec2 norm_position_2d = position_2d*vec2(screen_ratio, 1.0);
       vec2 norm_magnifier_center = magnifier_center*vec2(screen_ratio, 1.0);
       float distance_from_center = length(norm_position_2d-norm_magnifier_center);
-      if (distance_from_center>0.2) {
+      if (distance_from_center>0.50) {
         discard;
       }
       vec3 color = vec3(0.8, 0.4, 1.0);
@@ -275,7 +275,7 @@ function FragmentShaderZombiePixel() {
       vec2 norm_position_2d = position_2d*vec2(screen_ratio, 1.0);
       vec2 norm_magnifier_center = magnifier_center*vec2(screen_ratio, 1.0);
       float distance_from_center = length(norm_position_2d-norm_magnifier_center);
-      if (distance_from_center>0.2) {
+      if (distance_from_center>0.50) {
         discard;
       }
       vec3 color = vec3(0.8, 0.4, 1.0);
@@ -311,7 +311,7 @@ export class Magnifier {
     this.scene = scene;
     this.pixels = [];
     this.pixel_state_grid = [[pixelState.dead, pixelState.dead, pixelState.dead],[pixelState.dead, pixelState.dead, pixelState.alive], [pixelState.alive, pixelState.zombie, pixelState.alive]];
-    this.pixel_size = 40;
+    this.pixel_size = 90;
     this.pixel_count = 3;
     this.initial_position_x = 500;
     this.initial_position_y = 0;
