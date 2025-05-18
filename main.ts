@@ -63,11 +63,11 @@ const os = new Os(width, height, renderer, simulation);
 let tablette_shader = new THREE.ShaderMaterial({
   uniforms: {
     canvas: { value: os.canvas_texture },
-    simulation: { value: simulation.GetTexture() }
+    simulation: { value: simulation.GetTexture() },
   },
   vertexShader: `varying vec2 vUv; void main() {gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); vUv = uv;}`,
   fragmentShader: `varying vec2 vUv; uniform sampler2D canvas; uniform sampler2D simulation; void main() {gl_FragColor = mix(texture2D(simulation, vUv), texture2D(canvas, vUv), 0.5);}`,
-  transparent: true
+  transparent: true,
 });
 let tablette = new THREE.Mesh(
   new THREE.PlaneGeometry(width, height, 1),
@@ -179,7 +179,10 @@ document.addEventListener("mousedown", (event: MouseEvent) => {
     const sound_tap =
       sound_taps[THREE.MathUtils.randInt(0, sound_taps.length - 1)];
     sound_tap.play();
-    if (os.IsMouseOverTabletScreen(event.clientX, event.clientY)) {
+    if (
+      os.IsMouseOverTabletScreen(event.clientX, event.clientY) &&
+      !os.IsXorcizing()
+    ) {
       const x = os.GetMouseXInTabletScreenSpace(event.clientX);
       const y = os.GetMouseYInTabletScreenSpace(event.clientY);
       simulation.PressScreen(x, y);
@@ -202,7 +205,8 @@ document.addEventListener("mousemove", (event: MouseEvent) => {
   os.SetMouseMove(event.clientX, event.clientY);
   if (
     arm_press.visible &&
-    os.IsMouseOverTabletScreen(event.clientX, event.clientY)
+    os.IsMouseOverTabletScreen(event.clientX, event.clientY) &&
+    !os.IsXorcizing()
   ) {
     const x = os.GetMouseXInTabletScreenSpace(event.clientX);
     const y = os.GetMouseYInTabletScreenSpace(event.clientY);

@@ -101,6 +101,11 @@ export class Os {
       y < tablet_y + this.height
     );
   }
+  public IsXorcizing() {
+    return (
+      this.started_dragging_at_x !== -1 && this.started_dragging_at_y !== -1
+    );
+  }
   public GetMouseXInTabletScreenSpace(x: number) {
     let tablet_x = Math.floor((window.innerWidth - this.width) / 2);
     return Math.max(0, Math.min((x - tablet_x) / (this.width - 1), 1));
