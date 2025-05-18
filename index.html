@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Pixel Fixer Simulator 2.0: dead pixels should never come back</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/svg+xml" href="favicon.webp">
+</head>
+
+<body>
+    <div id="Fps"></div>
+
+    <audio id="SoundTap">
+        <source src="resources/sound/HumanHandsWipe_S08HU.2521_3.wav" type="audio/mpeg">
+    </audio>
+    <audio id="SoundSwipe">
+        <source src="resources/sound/ClothSmoothSheet_S08FO.616.wav" type="audio/mpeg">
+    </audio>
+    <audio id="SoundTrack" loop>
+        <source src="resources/sound/TEST GAME JAM track2.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="SoundToggle">
+        <source src="resources/sound/pop.wav" type="audio/mpeg">
+    </audio>
+    <audio id="SoundIconNotes">
+        <source src="resources/sound/open folder.wav" type="audio/mpeg">
+    </audio>
+    <audio id="SoundIconClock">
+        <source src="resources/sound/Phone_Camera_3.wav" type="audio/mpeg">
+    </audio>
+    <audio id="SoundIconWeather">
+        <source src="resources/sound/corbeille.wav" type="audio/mpeg">
+    </audio>
+    <audio id="SoundIconEmails">
+        <source src="resources/sound/HumanBreathe_S08HU.61.wav" type="audio/mpeg">
+    </audio>
+    <audio id="Sound404">
+        <source src="resources/sound/Wrong.wav" type="audio/mpeg">
+    </audio>
+    <audio id="SoundXorcizeMove"><!-- To replace with sound of wet finger on glass -->
+        <source src="resources/sound/MA_Swipe__Synth_.wav" type="audio/mpeg">
+    </audio>
+    <audio id="SoundXorcizeSuccess">
+        <source src="resources/sound/sound-effect-twinklesparkle-115095.mp3" type="audio/mpeg">
+    </audio>
+
+    <audio id="SoundPixel1">
+        <source src="resources/sound/ESM_Digital_Typeing_Code_Particle_Whoosh_Sci_fi_Military_Robotic_Robot_Cyber_Futuristic_Transition.wav" type="audio/mpeg">
+    </audio>
+    <audio id="SoundPixel2">
+        <source src="resources/sound/ESM_Fast_Mechanical_Computer_Program_Particle_Sci_Fi_Abstract_Loading_Particle_Military.wav" type="audio/mpeg">
+    </audio>
+    <audio id="SoundPixel3">
+        <source src="resources/sound/ESM_SG_fx_ui_swipe_organic_pneumatic_hydrolic_movement.wav" type="audio/mpeg">
+    </audio>
+
+    <script type="module" src="bundle.js"></script>
+
+    <div id="GameOverOverlay" hidden>
+        <div class="Title">
+            <p>Pixel Fixer Simulator 2.0</p>
+            <div class="Subtitle">Dead pixels should never come back!</div>
+        </div>
+        <div id="GameOver">GAME OVER</div>
+        <button class="RetryButton">RETRY</button>
+    </div>
+    <div id="GameSuccessOverlay" hidden>
+        <div class="Title">
+            <p>Pixel Fixer Simulator 2.0</p>
+            <div class="Subtitle">Dead pixels should never come back!</div>
+        </div>
+        <div id="Success">SUCCESS</div>
+        <button class="RetryButton">RETRY</button>
+    </div>
+</body>
+
+</html>
