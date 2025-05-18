@@ -284,7 +284,7 @@ export class Simulation {
     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, binded_framebuffer);
     this.gl.viewport(viewport[0], viewport[1], viewport[2], viewport[3]);
     let is_pixel_healed = 1;
-    return is_pixel_healed;
+    return is_pixel_healed;  // TODO
   }
 
   GetTexture() {
