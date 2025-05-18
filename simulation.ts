@@ -82,7 +82,7 @@ export class Simulation {
       }
     `;
 
-    // Red channel : Alive (255) or Dead (0)
+    // Red channel : Alive (255) | Dieing (127) | Dead (0)
     // Green channel : Timestamp
     // Blue channel : Zombie (255)
     const fragment_shader_simulation_source = `#version 300 es
@@ -117,11 +117,14 @@ export class Simulation {
           zombie_count += data22.b==255?1:0;
           int die = data11.g-zombie_count;
           if (die <= 0) {
-            data11.r = 0;
+            data11.r = 254;
             data11.g = 255;
           } else {
             data11.g -= zombie_count;
           }
+        }
+        if (data11.r != 0 && data11.r < 255) { // Dieing
+          data11.r -= 1;
         }
         if (data11.r == 0) { // Dead
           data11.g -= 1;
