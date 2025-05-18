@@ -233,7 +233,6 @@ function renderLoop(timestamp: number) {
     magnifier.Release();
   }
   magnifier.Update(duration);
-  // tablette.material.map = simulation.GetTexture();
   // tablette.material.map!.needsUpdate = true;
 
   document.getElementById("Fps")!.textContent =

@@ -17,20 +17,16 @@ function loadShader(gl:WebGLRenderingContext|WebGL2RenderingContext, type:GLenum
 export class Simulation {
   private gl: WebGLRenderingContext|WebGL2RenderingContext;
   private program: WebGLProgram;
-  private framebuffer_1: WebGLFramebuffer;
-  private framebuffer_2: WebGLFramebuffer;
-  private texture_1: WebGLTexture;
-  private texture_2: WebGLTexture;
+  private framebuffer: WebGLFramebuffer;
+  private texture_input: WebGLTexture;
+  private texture_framebuffer: WebGLTexture;
   private texture_width: number;
   private texture_height: number;
-  private texture_three_1: THREE.Texture;
-  private texture_three_2: THREE.Texture;
-  private current_frame: number;
+  private texture_three_js: THREE.Texture;
   public constructor(renderer: THREE.WebGLRenderer, width: number, height: number) {
     this.gl = renderer.getContext();
-    this.current_frame = 0;
-    this.texture_1 = this.gl.createTexture();
-    this.texture_2 = this.gl.createTexture();
+    this.texture_input = this.gl.createTexture();
+    this.texture_framebuffer = this.gl.createTexture();
     this.texture_width = width;
     this.texture_height = height;
     {
@@ -41,33 +37,29 @@ export class Simulation {
       const type = this.gl.UNSIGNED_BYTE;
       let data = new Uint8Array(this.texture_width*this.texture_height*4);
       for(let i=0; i<this.texture_width*this.texture_height; i++) {
-        data[i*4+0] = 0;
+        data[i*4+0] = 255;
         data[i*4+1] = 255;
         data[i*4+2] = 0;
         data[i*4+3] = 255;
       }
-      data[(50*this.texture_width+320)*4] = 255;
-      data[(50*this.texture_width+320)*4+1] = 0;
-      this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture_1);
+      data[(50*this.texture_width+320)*4] = 0;
+      this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture_input);
       this.gl.texImage2D(this.gl.TEXTURE_2D, level, internalFormat,
         this.texture_width, this.texture_height, border, format, type, data);
-      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
       this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
       this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-      this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture_2);
+      this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture_framebuffer);
       this.gl.texImage2D(this.gl.TEXTURE_2D, level, internalFormat,
         this.texture_width, this.texture_height, border, format, type, data);
-      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
       this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
       this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
     }
-    this.framebuffer_1 = this.gl.createFramebuffer();
-    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.framebuffer_1);
+    this.framebuffer = this.gl.createFramebuffer();
+    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.framebuffer);
     const attachmentPoint = this.gl.COLOR_ATTACHMENT0;
-    this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, attachmentPoint, this.gl.TEXTURE_2D, this.texture_1, 0);
-    this.framebuffer_2 = this.gl.createFramebuffer();
-    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.framebuffer_2);
-    this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, attachmentPoint, this.gl.TEXTURE_2D, this.texture_2, 0);
+    this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, attachmentPoint, this.gl.TEXTURE_2D, this.texture_framebuffer, 0);
     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
     
     const vsSource = `#version 300 es
@@ -75,20 +67,23 @@ export class Simulation {
       void main() {
         if (gl_VertexID == 0) {
           gl_Position = vec4(1.0, 1.0, 0.0, 1.0);
-          vUv = vec2(0.0, 0.0);
+          vUv = vec2(1.0, 1.0);
         } else if (gl_VertexID == 1) {
           gl_Position = vec4(-1.0, 1.0, 0.0, 1.0);
-          vUv = vec2(1.0, 0.0);
+          vUv = vec2(0.0, 1.0);
         } else if (gl_VertexID == 2) {
           gl_Position = vec4(1.0, -1.0, 0.0, 1.0);
-          vUv = vec2(0.0, 1.0);
+          vUv = vec2(1.0, 0.0);
         } else {
           gl_Position = vec4(-1.0, -1.0, 0.0, 1.0);
-          vUv = vec2(1.0, 1.0);
+          vUv = vec2(0.0, 0.0);
         }
       }
     `;
 
+    // Red channel : Alive (255) or Dead (0)
+    // Green channel : Timestamp
+    // Blue channel : Zombie (255)
     const fsSource = `#version 300 es
       precision highp float;
       in vec2 vUv;
@@ -97,16 +92,43 @@ export class Simulation {
 		  uniform vec2 current_state_size;
       void main() {
         vec2 pixel_size = vec2(1.0/current_state_size.x, 1.0/current_state_size.y);
-        vec4 data00 = texture(current_state, vUv+vec2(-pixel_size.x, -pixel_size.y));
-        vec4 data10 = texture(current_state, vUv+vec2(pixel_size.x, -pixel_size.y));
-        vec4 data01 = texture(current_state, vUv+vec2(-pixel_size.x, pixel_size.y));
-        vec4 data11 = texture(current_state, vUv+vec2(pixel_size.x, pixel_size.y));
-        vec4 data = texture(current_state, vUv);
-        if (data00.r > 0.0 || data10.r > 0.0 || data01.r > 0.0 || data11.r > 0.0) {
-          data.r = 1.0;
-          data.g = 0.0;
+        
+        ivec4 data00 = ivec4(texture(current_state, vUv+vec2(-pixel_size.x, -pixel_size.y))*255.0);
+        ivec4 data01 = ivec4(texture(current_state, vUv+vec2(0.0, -pixel_size.y))*255.0);
+        ivec4 data02 = ivec4(texture(current_state, vUv+vec2(pixel_size.x, -pixel_size.y))*255.0);
+
+        ivec4 data10 = ivec4(texture(current_state, vUv+vec2(-pixel_size.x, 0.0))*255.0);
+        ivec4 data11 = ivec4(texture(current_state, vUv+vec2(0.0, 0.0))*255.0);
+        ivec4 data12 = ivec4(texture(current_state, vUv+vec2(pixel_size.x, 0.0))*255.0);
+
+        ivec4 data20 = ivec4(texture(current_state, vUv+vec2(-pixel_size.x, pixel_size.y))*255.0);
+        ivec4 data21 = ivec4(texture(current_state, vUv+vec2(0.0, pixel_size.y))*255.0);
+        ivec4 data22 = ivec4(texture(current_state, vUv+vec2(pixel_size.x, pixel_size.y))*255.0);
+
+        if (data11.r == 255) { // Alive
+          int zombie_count = data00.b==255?1:0;
+          zombie_count += data01.b==255?1:0;
+          zombie_count += data02.b==255?1:0;
+          zombie_count += data10.b==255?1:0;
+          zombie_count += data12.b==255?1:0;
+          zombie_count += data20.b==255?1:0;
+          zombie_count += data21.b==255?1:0;
+          zombie_count += data22.b==255?1:0;
+          int die = data11.g-zombie_count;
+          if (die <= 0) {
+            data11.r = 0;
+            data11.g = 255;
+          } else {
+            data11.g -= zombie_count;
+          }
         }
-        out_color = data;
+        if (data11.r == 0) { // Dead
+          data11.g -= 1;
+          if (data11.g == 0) {
+            data11.b = 255;
+          }
+        }
+        out_color = vec4(data11)/255.0;
       }
     `;
     const vertexShader = loadShader(this.gl, this.gl.VERTEX_SHADER, vsSource);
@@ -115,12 +137,6 @@ export class Simulation {
     this.gl.attachShader(this.program, vertexShader!);
     this.gl.attachShader(this.program, fragmentShader!);
     this.gl.linkProgram(this.program);
-
-    /*this.positionBuffer = this.gl.createBuffer();
-    const positions = [1.0, 1.0, 0.0, -1.0, 1.0, 0.0, 1.0, -1.0, 0.0, -1.0, -1.0, 0.0];
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
-    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(positions), this.gl.STATIC_DRAW);
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);*/
 
     const forceTextureInitialization = function() {
       const material = new THREE.MeshBasicMaterial();
@@ -140,37 +156,28 @@ export class Simulation {
         renderer.render(scene, camera);
       };
     }();
-    this.texture_three_1 = new THREE.Texture();
-    forceTextureInitialization(this.texture_three_1);
-    let texProps = renderer.properties.get(this.texture_three_1);
-    texProps.__webglTexture = this.texture_1;
-    this.texture_three_2 = new THREE.Texture();
-    forceTextureInitialization(this.texture_three_2);
-    texProps = renderer.properties.get(this.texture_three_2);
-    texProps.__webglTexture = this.texture_2;
+    this.texture_three_js = new THREE.Texture();
+    forceTextureInitialization(this.texture_three_js);
+    let texProps = renderer.properties.get(this.texture_three_js);
+    texProps.__webglTexture = this.texture_input;
   }
   Simulate() {
     const viewport = this.gl.getParameter(this.gl.VIEWPORT);
     const binded_framebuffer = this.gl.getParameter(this.gl.FRAMEBUFFER_BINDING);
     const binded_texture = this.gl.getParameter(this.gl.TEXTURE_BINDING_2D);
-    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.current_frame===0?this.framebuffer_2:this.framebuffer_1);
-    this.gl.bindTexture(this.gl.TEXTURE_2D, this.current_frame===0?this.texture_1:this.texture_2);
+    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.framebuffer);
+    this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture_input);
     this.gl.activeTexture(this.gl.TEXTURE0);
     this.gl.viewport(0, 0, this.texture_width, this.texture_height);
     this.gl.useProgram(this.program);
-    //this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
-    //this.gl.enableVertexAttribArray(this.gl.getAttribLocation(this.program, "in_pos"));
-    //this.gl.vertexAttribPointer(0, 3, this.gl.FLOAT, false, 0, 0);
-    //this.gl.vertexAttribPointer(this.gl.getAttribLocation(this.program, "in_pos"), 2, this.gl.FLOAT, false, 0, 0);
     this.gl.uniform2f(this.gl.getUniformLocation(this.program, "current_state_size"), this.texture_width, this.texture_height);
     this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
-    //this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
+    this.gl.copyTexImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA8, 0, 0, this.texture_width, this.texture_height, 0);
     this.gl.bindTexture(this.gl.TEXTURE_2D, binded_texture);
     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, binded_framebuffer);
-    this.current_frame = this.current_frame===0?1:0;
     this.gl.viewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 	}
   GetTexture() {
-    return this.current_frame===0 ? this.texture_three_1 : this.texture_three_2;
+    return this.texture_three_js;
   }
 }
