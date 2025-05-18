@@ -17,6 +17,8 @@ export class Os {
   started_dragging_at_x = -1;
   started_dragging_at_y = -1;
 
+  private retrieved_buffer;
+
   icons = new Array<OsIcon>();
   panels = new Array<OsPanel>();
   toggles = new Array<OsToggle>(); // Settings panel only
@@ -59,6 +61,8 @@ export class Os {
     this.canvas_texture.generateMipmaps = false;
     this.canvas_texture.needsUpdate = true;
     this.canvas_texture.flipY = true;
+
+    this.retrieved_buffer = new Uint8Array(width * height * 4);
 
     const loader = new THREE.TextureLoader();
     this.wallpaper_texture = loader.load(`resources/texture/wallpaper.png`);
@@ -282,9 +286,15 @@ export class Os {
 
     this.mouse_pressed = false;
     this.mouse_released = false;
+
+    this.canvas_texture.userData
   }
 
   public MagnifierSettingIsOn() {
     return this.toggles[3].on;
+  }
+
+  GetCPUTexture() {
+    return this.retrieved_buffer;
   }
 }

@@ -60,6 +60,21 @@ scene.add(table);
 
 const os = new Os(width, height, renderer, simulation);
 
+function GetACroppedRegionOfTheScreenColorAndOfTheSimulation(/*x: number, y: number*/) {
+  //const pixel_state = simulation.GetCPUTexture();
+
+  // data[(pixel_y*7+pixel_x)*8 + 0] -> Red color
+  // data[(pixel_y*7+pixel_x)*8 + 1] -> Green color
+  // data[(pixel_y*7+pixel_x)*8 + 2] -> Blue color
+  // data[(pixel_y*7+pixel_x)*8 + 3] -> Alpha color
+  // data[(pixel_y*7+pixel_x)*8 + 4] -> State (255 -> Alive | 0 -> Dead)
+  // data[(pixel_y*7+pixel_x)*8 + 5] -> A timestamp
+  // data[(pixel_y*7+pixel_x)*8 + 6] -> Is Zombie (255 -> Yes | 0 -> No)
+  // data[(pixel_y*7+pixel_x)*8 + 7] -> Padding for the memory
+  const data = new Uint8Array(7 * 7 * (4 + 4)); // 64 pixels with their RGBA color and simulation state.
+  return data;
+}
+
 let tablette_shader = new THREE.ShaderMaterial({
   uniforms: {
     canvas: { value: os.canvas_texture },

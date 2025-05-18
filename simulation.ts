@@ -330,6 +330,10 @@ export class Simulation {
     return this.texture_three_js;
   }
 
+  GetCPUTexture() {
+    return this.retrieved_buffer;
+  }
+
   AreAllPixelsAlive() {
     return this.num_alive_pixels === this.num_pixels;
   }
