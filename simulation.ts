@@ -222,4 +222,19 @@ export class Simulation {
   GetTexture() {
     return this.texture_three_js;
   }
+  AreAllPixelsAlive() {
+    return false;  // TODO
+  }
+  AreMostPixelsDead() {
+    return true;  // TODO
+  }
+  InstantlyKillMostPixels() {
+    // TODO
+  }
+  HealPixelsAtPosition(_x: number, _y: number, _width: number, _height: number) {
+    // TODO: Heal pixels in rect (tablet screen relative)
+    // Warning: position is not checked against tablet screen boundaries.
+    // TODO: Return the number of healed pixels in rect
+    return 0;
+  }
 }
