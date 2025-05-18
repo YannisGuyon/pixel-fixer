@@ -139,9 +139,10 @@ export class Simulation {
       out vec4 out_color;
 		  uniform sampler2D simulation;
 		  uniform vec2 position_click;
+		  uniform float simulation_screen_ratio;
       void main() {
         ivec4 pixel = ivec4(texture(simulation, vUv)*255.0);
-        if (length(vUv-position_click)<0.1) {
+        if (length(vUv*vec2(simulation_screen_ratio, 1.0)-position_click*vec2(simulation_screen_ratio, 1.0))<0.02) {
           pixel = ivec4(0, 255, 0, 255); // Dead
         }
         out_color = vec4(pixel)/255.0;
@@ -212,6 +213,7 @@ export class Simulation {
     this.gl.viewport(0, 0, this.texture_width, this.texture_height);
     this.gl.useProgram(this.program_kill_pixels);
     this.gl.uniform2f(this.gl.getUniformLocation(this.program_kill_pixels, "position_click"), x, y);
+    this.gl.uniform1f(this.gl.getUniformLocation(this.program_kill_pixels, "simulation_screen_ratio"), this.texture_width/this.texture_height);
     this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
     this.gl.copyTexImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA8, 0, 0, this.texture_width, this.texture_height, 0);
     this.gl.bindTexture(this.gl.TEXTURE_2D, binded_texture);
