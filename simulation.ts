@@ -50,7 +50,12 @@ export class Simulation {
         data[i*4+2] = 0;
         data[i*4+3] = 255;
       }
-      data[(50*this.texture_width+320)*4] = 0;
+      const starting_dead_pixel_x = 590;
+      const starting_dead_pixel_y = 402;
+      data[(starting_dead_pixel_y*this.texture_width+starting_dead_pixel_x)*4] = 0;
+      data[(starting_dead_pixel_y*this.texture_width+starting_dead_pixel_x+1)*4] = 0;
+      data[((starting_dead_pixel_y+1)*this.texture_width+starting_dead_pixel_x)*4] = 0;
+      data[((starting_dead_pixel_y+1)*this.texture_width+starting_dead_pixel_x+1)*4] = 0;
       this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture_input);
       this.gl.texImage2D(this.gl.TEXTURE_2D, level, internalFormat,
         this.texture_width, this.texture_height, border, format, type, data);
@@ -332,6 +337,14 @@ export class Simulation {
 
   AreAllPixelsAlive() {
     return this.num_alive_pixels === this.num_pixels;
+  }
+
+  GetNumDeadPixels() {
+    return this.num_pixels - this.num_alive_pixels;
+  }
+
+  GetDeadPixelRatio() {
+    return this.GetNumDeadPixels() / this.num_pixels;
   }
 
   AreMostPixelsDead() {
