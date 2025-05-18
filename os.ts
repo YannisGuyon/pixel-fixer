@@ -3,6 +3,7 @@ import { OsIcon } from "./os_icon";
 import { OsPanel } from "./os_panel";
 import { OsPanelEmails } from "./os_panel_emails";
 import { OsToggle } from "./os_toggle";
+import { Simulation } from "./simulation";
 
 export class Os {
   canvas_texture;
@@ -48,7 +49,8 @@ export class Os {
   public constructor(
     public width: number,
     public height: number,
-    public renderer: THREE.WebGLRenderer
+    public renderer: THREE.WebGLRenderer,
+    public simulation: Simulation
   ) {
     this.data = new Uint8Array(width * height * 4);
     for (let i = 0; i < width * height * 4; ++i) this.data[i] = 255;
@@ -141,7 +143,7 @@ export class Os {
         }
         if (this.toggles[i].CollectEvent(this.mouse_x, this.mouse_y)) {
           if (i == 0) {
-            // Kill half pixels
+            this.simulation.InstantlyKillMostPixels();
           }
           return;
         }
@@ -230,9 +232,14 @@ export class Os {
       ) {
         this.icons[6].overidden_position.x = this.mouse_x;
         this.icons[6].overidden_position.y = this.mouse_y;
-        // TODO: Check Xorcize position against dead pixels here
-        //       and play sound in function
-        if (THREE.MathUtils.randInt(0, 20) == 0) {
+        if (
+          this.simulation.HealPixelsAtPosition(
+            this.mouse_x - this.icons[6].overidden_position_offset.x,
+            this.mouse_y - this.icons[6].overidden_position_offset.y,
+            64,
+            64
+          ) != 0
+        ) {
           this.sound_xorcize_success.currentTime = 0;
           this.sound_xorcize_success.play();
         } else {

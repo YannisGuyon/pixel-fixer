@@ -23,10 +23,10 @@ body {
     /*display: none;*/
 }
 
-#GameOverOverlay {
+#GameOverOverlay,
+#GameSuccessOverlay {
     position: absolute;
     background: rgba(2, 0, 36, 0.9);
-    background: linear-gradient(346deg, rgba(146, 11, 11, 0.9) 0%, rgba(25, 6, 95, 0.9) 43%, rgba(2, 37, 58, 0.9) 91%);
     left: 0;
     right: 0;
     top: 0;
@@ -36,18 +36,25 @@ body {
     z-index: 20;
     overflow: hidden;
     cursor: pointer;
-    /* display: none; */
 }
 
-#Title {
+#GameOverOverlay {
+    background: linear-gradient(346deg, rgba(146, 11, 11, 0.9) 0%, rgba(25, 6, 95, 0.9) 43%, rgba(2, 37, 58, 0.9) 91%);
+}
+
+#GameSuccessOverlay {
+    background: linear-gradient(14deg, rgba(4, 51, 8, 0.9) 5%, rgba(196, 241, 196, 0.9) 43%, rgba(14, 139, 14, 0.9) 91%);
+}
+
+.Title {
     position: absolute;
     top: 10%;
     left: 5%;
     width: 50%;
 }
 
-#Title p {
-    margin: 0;
+.Title p {
+    margin: 0 0 10px 0;
     padding: 0;
     text-align: center;
     font-family: monospace;
@@ -71,12 +78,12 @@ body {
     transform: rotate(-11deg);
 }
 
-#Subtitle {
+.Subtitle {
     text-align: center;
     font-family: serif;
     font-size: 2em;
     color: #ff0000;
-    text-shadow: -3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000, 3px 3px 0 #000;
+    text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, -2px 0px 0 #000, 2px 0px 0 #000, 0px 2px 0 #000, 0px -2px 0 #000;
     transform: rotate(-11deg);
 }
 
@@ -91,7 +98,26 @@ body {
     color: #ffffff;
 }
 
-#RetryButton {
+#Success {
+    position: absolute;
+    bottom: 5%;
+    left: 5%;
+    right: 5%;
+    font-family: fantasy;
+    font-size: 12em;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+#GameOverOverlay .RetryButton {
+    background-color: #d3444b;
+}
+
+#GameSuccessOverlay .RetryButton {
+    background-color: #1e811e;
+}
+
+.RetryButton {
     position: absolute;
     top: 15%;
     right: 5%;
@@ -99,7 +125,6 @@ body {
     height: 30%;
 
     appearance: button;
-    background-color: #d3444b;
     border: solid transparent;
     border-width: 0 0 4px;
     box-sizing: border-box;
@@ -125,21 +150,21 @@ body {
     white-space: nowrap;
 }
 
-#RetryButton:main,
-#RetryButton:focus {
+.RetryButton:main,
+.RetryButton:focus {
     user-select: auto;
 }
 
-#RetryButton:hover:not(:disabled):not(:active) {
+.RetryButton:hover:not(:disabled):not(:active) {
     filter: brightness(1.1);
     -webkit-filter: brightness(1.1);
 }
 
-#RetryButton:active {
+.RetryButton:active {
     filter: brightness(0.6);
     -webkit-filter: brightness(0.6);
 }
 
-#RetryButton:disabled {
+.RetryButton:disabled {
     cursor: auto;
 }

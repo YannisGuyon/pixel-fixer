@@ -58,7 +58,7 @@ table.position.y = 0;
 table.position.z = -10;
 scene.add(table);
 
-const os = new Os(width, height, renderer);
+const os = new Os(width, height, renderer, simulation);
 
 const arm_release = new THREE.Mesh(
   new THREE.PlaneGeometry(1007 * 0.5, 3098 * 0.5, 1, 1),
@@ -127,16 +127,18 @@ const sound_taps = [
 const game_over_overlay = document.getElementById(
   "GameOverOverlay"
 )! as HTMLElement;
-const retry_button = document.getElementById(
-  "RetryButton"
-)! as HTMLButtonElement;
-retry_button.onclick = () => {
-  location.reload();
-};
+const success_overlay = document.getElementById(
+  "GameSuccessOverlay"
+)! as HTMLElement;
+for (const retry_button of document.getElementsByClassName("RetryButton")) {
+  (retry_button as HTMLElement).onclick = () => {
+    location.reload();
+  };
+}
 
 // Events
 document.addEventListener("mousedown", (event: MouseEvent) => {
-  if (!game_over_overlay.hidden) return;
+  if (!success_overlay.hidden || !game_over_overlay.hidden) return;
   if (
     os.MagnifierSettingIsOn() &&
     event.clientX >= window.innerWidth / 2 + 370 &&
@@ -165,7 +167,7 @@ document.addEventListener("mousedown", (event: MouseEvent) => {
   }
 });
 document.addEventListener("mouseup", (event: MouseEvent) => {
-  if (!game_over_overlay.hidden) return;
+  if (!success_overlay.hidden || !game_over_overlay.hidden) return;
   if (arm_magnifier.visible) {
     arm_release.visible = false;
     arm_press.visible = false;
@@ -176,7 +178,7 @@ document.addEventListener("mouseup", (event: MouseEvent) => {
   os.SetMouseReleased(event.clientX, event.clientY);
 });
 document.addEventListener("mousemove", (event: MouseEvent) => {
-  if (!game_over_overlay.hidden) return;
+  if (!success_overlay.hidden || !game_over_overlay.hidden) return;
   os.SetMouseMove(event.clientX, event.clientY);
   console.log(window.innerHeight);
   arm_release.position.x =
@@ -194,13 +196,13 @@ document.addEventListener("mousemove", (event: MouseEvent) => {
 });
 
 document.addEventListener("keydown", (event: KeyboardEvent) => {
-  if (!game_over_overlay.hidden) return;
+  if (!success_overlay.hidden || !game_over_overlay.hidden) return;
   if (event.code === "ShiftLeft") {
     magnifier.Grab();
   }
 });
 document.addEventListener("keyup", (event: KeyboardEvent) => {
-  if (!game_over_overlay.hidden) return;
+  if (!success_overlay.hidden || !game_over_overlay.hidden) return;
   if (event.code === "ShiftLeft") {
     magnifier.Release();
   }
@@ -256,7 +258,9 @@ function renderLoop(timestamp: number) {
 
   simulation.Simulate();
 
-  if (simulation.AreMostPixelsDead()) {
+  if (simulation.AreAllPixelsAlive()) {
+    success_overlay.hidden = false;
+  } else if (simulation.AreMostPixelsDead()) {
     game_over_overlay.hidden = true;
   }
 
