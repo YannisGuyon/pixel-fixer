@@ -299,8 +299,8 @@ function SetMagnifiersPositions(x:number, y:number) {
       (-y + 1512 / 2 + window.innerHeight / 2) / 1512
     );
     magnifier_fisheye_tablet.SetPosition(
-      (x + 640 / 2 - window.innerWidth / 2) / 640,
-      (-y + 480 / 2 + window.innerHeight / 2) / 480
+      (x + 640*2 / 2 - window.innerWidth / 2) / 640,
+      (-y + 480*2 / 2 + window.innerHeight / 2) / 480
     );
   } else {
     magnifier_fisheye.SetPosition(
@@ -308,8 +308,8 @@ function SetMagnifiersPositions(x:number, y:number) {
       (-(window.innerHeight / 2 + the_magnifier.position.y-60) + 480 / 2 + window.innerHeight / 2) / 480
     );
     magnifier_fisheye_tablet.SetPosition(
-      (window.innerWidth / 2+ the_magnifier.position.x+20 + 640 / 2 - window.innerWidth / 2) / 640,
-      (-(window.innerHeight / 2 + the_magnifier.position.y-60) + 480 / 2 + window.innerHeight / 2) / 480
+      (window.innerWidth / 2+ the_magnifier.position.x+20 + 640*2 / 2 - window.innerWidth / 2) / 640,
+      (-(window.innerHeight / 2 + the_magnifier.position.y-60) + 480*2 / 2 + window.innerHeight / 2) / 480
     );
   }
 }

@@ -25,7 +25,7 @@ export class MagnifierFisheye {
             vec2 myUv = vec2(vUv.x*2016./1512.,vUv.y);
             vec2 diff = myUv-magnifier_center;
             if (length(diff) < 0.09) {
-                vec2 newUv = magnifier_center + diff *0.2;
+                vec2 newUv = magnifier_center + diff *0.02;
                 gl_FragColor = texture2D(canvas, vec2(newUv.x/2016.*1512., newUv.y));
             }
             else {
